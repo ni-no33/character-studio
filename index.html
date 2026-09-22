@@ -1,0 +1,5044 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Character Interview Studio - キャラクター対話録＆詳細カルテ</title>
+  
+  <!-- PWA / モバイル単体利用（ホーム画面追加）対応 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CharStudio">
+  <meta name="application-name" content="Character Interview Studio">
+  <meta name="theme-color" content="#10131a">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>📖</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23f59e0b%22/><text y=%22.9em%22 font-size=%2275%22 x=%2212%22>📖</text></svg>">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400;500&family=Nunito:wght@600;700;800;900&family=Shippori+Mincho:wght@400;600;700&family=Yuji+Boku&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #10131a;
+      --bg-surface: #161b24;
+      --bg-card: #1c222e;
+      --bg-card-hover: #222938;
+      --border-color: rgba(255, 255, 255, 0.08);
+      
+      --theme-accent: #f59e0b;
+      --theme-glow: rgba(245, 158, 11, 0.2);
+      --theme-soft: rgba(245, 158, 11, 0.12);
+      
+      --genre-color: #f59e0b;
+      
+      --text-main: #f1f5f9;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+
+      --font-ui: 'Zen Kaku Gothic New', -apple-system, sans-serif;
+      --font-serif: 'Shippori Mincho', serif;
+      --font-en: 'Nunito', sans-serif;
+      --font-female: 'Kiwi Maru', cursive;
+      --font-male: 'Yuji Boku', serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      line-height: 1.5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ヘッダー */
+    header {
+      background: rgba(22, 27, 36, 0.96);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .app-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--theme-accent), #ec4899);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      box-shadow: 0 2px 8px var(--theme-glow);
+    }
+    .app-title {
+      font-family: var(--font-en);
+      font-weight: 800;
+      font-size: 15px;
+      color: #fff;
+    }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      outline: none;
+      user-select: none;
+    }
+    .btn-primary {
+      background: var(--theme-accent);
+      color: #111827;
+      box-shadow: 0 2px 8px var(--theme-glow);
+    }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.1); }
+    .btn-viewmode {
+      background: rgba(168, 85, 247, 0.15);
+      color: #d8b4fe;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .btn-viewmode.active {
+      background: #a855f7;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* キャラクターシェルフ（保護・削除対応） */
+    .char-shelf-bar {
+      background: rgba(16, 19, 26, 0.95);
+      border-bottom: 1px solid var(--border-color);
+      padding: 6px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+    .char-shelf-bar::-webkit-scrollbar { height: 3px; }
+    .char-shelf-bar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
+    .shelf-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .shelf-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px 3px 4px;
+      border-radius: 16px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .shelf-item:hover { border-color: rgba(255, 255, 255, 0.2); }
+    .shelf-item.active {
+      background: var(--theme-soft);
+      border-color: var(--theme-accent);
+      box-shadow: 0 0 10px var(--theme-glow);
+    }
+    .shelf-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #2a3142;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+    .shelf-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .shelf-item.active .shelf-name { color: var(--theme-accent); }
+    .shelf-lock-icon { font-size: 10px; opacity: 0.8; }
+    .shelf-badge {
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-sub);
+    }
+    .shelf-add-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .shelf-add-btn:hover { border-color: var(--theme-accent); color: var(--theme-accent); }
+
+    /* 3カラムメインレイアウト（ドラッグリサイズ対応） */
+    .three-column-layout {
+      display: flex;
+      gap: 0;
+      padding: 12px 14px;
+      flex: 1;
+      height: calc(100vh - 84px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* モバイルボトムナビゲーション (デフォルトは非表示、幅860px以下で表示) */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(22, 27, 36, 0.98);
+      backdrop-filter: blur(14px);
+      border-top: 1px solid var(--border-color);
+      z-index: 999;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 4px;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+    }
+    .mobile-nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      height: 100%;
+      background: transparent;
+      border: none;
+      color: var(--text-sub);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mobile-nav-btn .mob-icon { font-size: 18px; }
+    .mobile-nav-btn.active {
+      color: var(--theme-accent);
+    }
+    .mobile-nav-btn.active .mob-icon {
+      transform: scale(1.15);
+      filter: drop-shadow(0 0 6px var(--theme-glow));
+    }
+
+    /* モバイル用ドロップダウンメニュー */
+    .mobile-menu-toggle { display: none; }
+    .mobile-menu-dropdown {
+      display: none;
+      position: absolute;
+      top: 50px;
+      right: 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 200px;
+    }
+    .mobile-menu-dropdown.show { display: flex; }
+    .mobile-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      border: none;
+      color: var(--text-main);
+      font-size: 12px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+    }
+    .mobile-menu-item:hover { background: rgba(255, 255, 255, 0.08); }
+
+    /* レスポンシブメディアクエリ (幅860px以下) */
+    @media (max-width: 860px) {
+      body {
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+      }
+      .header-btn-desktop { display: none !important; }
+      .mobile-menu-toggle { display: inline-flex !important; }
+      .mobile-bottom-nav { display: flex !important; }
+
+      .three-column-layout {
+        height: calc(100dvh - 96px);
+        padding: 6px;
+        position: relative;
+        overflow: hidden;
+      }
+      .resizer { display: none !important; }
+
+      /* モバイル時は3カラムのうち、選択された1つのみを全画面表示 */
+      .column-panel {
+        display: none !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 0 2px 64px 2px !important;
+      }
+      .column-panel.mobile-active-col {
+        display: flex !important;
+      }
+
+      /* iPhone自動ズーム防止 */
+      input[type="text"], input[type="search"], textarea, select {
+        font-size: 16px !important;
+      }
+
+      /* モーダルのスマホ画面最適化 */
+      .modal-box {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        max-height: 88vh !important;
+        padding: 14px !important;
+      }
+      .modal-actions {
+        flex-wrap: wrap;
+      }
+
+      /* レーダーCanvas縮小 */
+      #radarCanvas {
+        max-width: 210px !important;
+        max-height: 210px !important;
+      }
+    }
+
+    .column-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+      overflow-y: auto;
+      padding: 0 8px;
+    }
+    .column-panel::-webkit-scrollbar { width: 4px; }
+    .column-panel::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    /* ドラッグ用スプリッター・境界線 */
+    .resizer {
+      width: 8px;
+      cursor: col-resize;
+      background: transparent;
+      position: relative;
+      flex-shrink: 0;
+      transition: background 0.15s;
+      z-index: 10;
+    }
+    .resizer::after {
+      content: '';
+      position: absolute;
+      top: 10%;
+      bottom: 10%;
+      left: 3px;
+      width: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      transition: all 0.15s;
+    }
+    .resizer:hover::after, .resizer.dragging::after {
+      background: var(--theme-accent);
+      box-shadow: 0 0 8px var(--theme-accent);
+      width: 3px;
+    }
+
+    .panel-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    /* ==========================================================
+       左カラム：ビジュアル＆衣装スタジオ
+       ========================================================== */
+    .outfit-bar {
+      display: flex;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 6px 8px;
+      gap: 4px;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+    }
+    .outfit-bar::-webkit-scrollbar { height: 3px; }
+    .outfit-bar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
+    .outfit-tab {
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .outfit-tab.active {
+      background: var(--bg-card);
+      color: var(--theme-accent);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    .outfit-add-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 3px 6px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .portrait-stage {
+      position: relative;
+      width: 100%;
+      height: 440px;
+      background: linear-gradient(180deg, #10131c 0%, #151924 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .portrait-stage.dragover {
+      border: 2px dashed var(--theme-accent);
+      background: rgba(245, 158, 11, 0.08);
+    }
+    .portrait-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+    }
+    .portrait-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 20px;
+    }
+    .portrait-tools {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      display: flex;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(6px);
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .portrait-tools button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .portrait-tools button:hover { color: var(--theme-accent); }
+
+    /* キャラ名・カラー・保護操作 */
+    .char-control-card {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .char-name-input {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid transparent;
+      width: 100%;
+      outline: none;
+    }
+    .char-name-input:focus { border-bottom-color: var(--theme-accent); }
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .lock-btn {
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+    .lock-btn.locked {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    .lock-btn.unlocked {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.25);
+    }
+    .del-char-btn {
+      background: transparent;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      padding: 3px 7px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .del-char-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      border-color: transparent;
+    }
+
+    /* ==========================================================
+       中央カラム：超詳細キャラクターカルテ
+       ========================================================== */
+    .center-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+    .sheet-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+    .sheet-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--theme-accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 4px;
+    }
+    .dense-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 8px;
+    }
+    .dense-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .dense-item.span-2 { grid-column: span 2; }
+    .dense-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+    .dense-input {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 4px 6px;
+      color: var(--text-main);
+      font-size: 11px;
+      outline: none;
+    }
+    .dense-input:focus { border-color: var(--theme-accent); }
+
+    /* 自由追加設定 */
+    .trait-row {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 5px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 6px;
+    }
+    .trait-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .trait-key-in {
+      background: transparent;
+      border: none;
+      color: var(--theme-accent);
+      font-weight: 700;
+      font-size: 11px;
+      width: 100%;
+      outline: none;
+    }
+    .trait-val-in {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 11px;
+      width: 100%;
+      outline: none;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    /* ==========================================================
+       右カラム：ジャンル別色分けインタビュー
+       ========================================================== */
+    .genre-nav-bar {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      overflow-x: auto;
+      padding: 6px 4px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .genre-nav-bar::-webkit-scrollbar { height: 3px; }
+    .genre-nav-bar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); }
+    .genre-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-sub);
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+    .genre-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    .genre-pill.active {
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .genre-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+
+    .genre-hero-banner {
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--genre-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .genre-hero-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .genre-hero-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 対談Qカード */
+    .q-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 9px 11px;
+      margin-bottom: 9px;
+      border-left: 3px solid var(--genre-color);
+    }
+
+    .q-head-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .q-num-badge {
+      font-family: var(--font-en);
+      font-weight: 900;
+      font-size: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--genre-color);
+      padding: 1px 5px;
+      border-radius: 3px;
+      margin-top: 1px;
+      flex-shrink: 0;
+    }
+    .q-title-txt {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      flex: 1;
+    }
+    .q-guide-txt {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .dialogue-box {
+      background: rgba(0, 0, 0, 0.22);
+      border-radius: 6px;
+      padding: 7px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .stage-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .stage-tag {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 3px;
+      background: rgba(168, 85, 247, 0.15);
+      color: #d8b4fe;
+      flex-shrink: 0;
+    }
+    .stage-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed rgba(216, 180, 254, 0.25);
+      color: #e9d5ff;
+      font-size: 11px;
+      font-style: italic;
+      outline: none;
+    }
+
+    .quote-block {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .avatar-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    .avatar-snap {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: #11141c;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .avatar-snap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .quote-box-wrap { flex: 1; }
+    .quote-textarea {
+      width: 100%;
+      min-height: 46px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 4px 7px;
+      color: #fff;
+      font-size: 13px;
+      line-height: 1.55;
+      resize: vertical;
+      outline: none;
+    }
+    .quote-textarea:focus { border-color: var(--genre-color); }
+
+    body[data-gender="female"] .quote-textarea {
+      font-family: var(--font-female);
+      font-size: 14px;
+      color: #fce7f3;
+    }
+    body[data-gender="male"] .quote-textarea {
+      font-family: var(--font-male);
+      font-size: 15px;
+      color: #f1f5f9;
+    }
+    body[data-gender="other"] .quote-textarea {
+      font-family: var(--font-serif);
+      font-size: 13px;
+    }
+
+    .pat-pill {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 9px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .pat-pill.active {
+      background: var(--genre-color);
+      color: #111;
+      font-weight: 700;
+      border-color: var(--genre-color);
+    }
+
+    /* アコーディオン */
+    .sub-item {
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.1);
+      margin-top: 3px;
+    }
+    .sub-head {
+      padding: 2px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .sub-head:hover { color: var(--text-main); }
+    .sub-body {
+      padding: 4px 6px;
+      display: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .sub-item.open .sub-body { display: block; }
+    .sub-item.open .sub-head { color: var(--genre-color); }
+    .sub-txt {
+      width: 100%;
+      height: 38px;
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-size: 11px;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+    }
+
+    /* 閲覧モード */
+    body.is-view-mode .quote-textarea {
+      border: none;
+      background: transparent;
+      padding: 0;
+      resize: none;
+      pointer-events: none;
+    }
+    body.is-view-mode .stage-input,
+    body.is-view-mode .dense-input,
+    body.is-view-mode .trait-val-in {
+      border: none;
+      pointer-events: none;
+    }
+    body.is-view-mode .q-ctrls,
+    body.is-view-mode .portrait-tools,
+    body.is-view-mode .outfit-add-btn,
+    body.is-view-mode .char-control-card button {
+      display: none !important;
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 520px;
+      padding: 16px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-box-large {
+      max-width: 820px;
+    }
+    .modal-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .modal-area {
+      width: 100%;
+      height: 120px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 8px;
+      color: #fff;
+      font-size: 11px;
+      outline: none;
+      margin-bottom: 8px;
+      font-family: monospace;
+    }
+
+    /* 検索 ＆ フィルターバー (案4) */
+    .q-filter-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 6px 8px;
+      margin-bottom: 6px;
+    }
+    .q-search-box {
+      position: relative;
+      width: 100%;
+    }
+    .q-search-box input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 5px 28px 5px 26px;
+      font-size: 11px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .q-search-box input:focus {
+      border-color: var(--genre-color);
+    }
+    .q-search-icon {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .q-search-clear {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: none;
+    }
+    .q-filter-chips {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .filter-chip {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-sub);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .filter-chip:hover {
+      background: rgba(255, 255, 255, 0.09);
+      color: #fff;
+    }
+    .filter-chip.active {
+      background: var(--genre-color);
+      color: #111;
+      font-weight: 700;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    /* 中央カラムのサブタブ切替 */
+    .center-subtabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 8px;
+    }
+    .center-subtab-btn {
+      flex: 1;
+      text-align: center;
+      padding: 4px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 5px;
+      cursor: pointer;
+      color: var(--text-sub);
+      background: transparent;
+      border: none;
+      transition: all 0.15s;
+    }
+    .center-subtab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .center-subtab-btn.active {
+      color: #111;
+      background: var(--theme-accent);
+      box-shadow: 0 2px 8px var(--theme-glow);
+    }
+
+    /* レーダーチャートセクション (表裏ダブル6軸 ＆ 総合タイプ診断 ＆ 5大トリセツ) */
+    .radar-mode-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .radar-mode-btn {
+      flex: 1;
+      padding: 5px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      transition: all 0.15s;
+    }
+    .radar-mode-btn.active {
+      background: var(--theme-accent);
+      color: #111;
+      box-shadow: 0 2px 8px var(--theme-glow);
+    }
+
+    /* 総合タイプ診断バッジ */
+    .radar-type-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+      border: 1px solid var(--theme-accent);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 14px var(--theme-glow);
+      position: relative;
+      overflow: hidden;
+    }
+    .radar-type-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .radar-type-badge {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .radar-type-sub {
+      font-size: 10px;
+      color: var(--theme-accent);
+      font-weight: 700;
+    }
+    .radar-type-desc {
+      font-size: 11px;
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+
+    .radar-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 0;
+    }
+    .radar-canvas-wrap {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .radar-sliders-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .radar-slider-item {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+    .radar-slider-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .radar-slider-val {
+      font-family: var(--font-en);
+      color: var(--theme-accent);
+      font-size: 11px;
+    }
+    .radar-slider-input {
+      width: 100%;
+      accent-color: var(--theme-accent);
+      cursor: pointer;
+    }
+
+    /* 5大シチュエーション取扱説明書 (公式トリセツ) */
+    .guide-section {
+      margin-top: 14px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 12px;
+    }
+    .guide-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .guide-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .guide-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 10px;
+      border-left: 3px solid var(--theme-accent);
+    }
+    .guide-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .guide-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .guide-card-tag {
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+    .guide-textarea {
+      width: 100%;
+      min-height: 48px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 6px 8px;
+      color: var(--text-main);
+      font-size: 11px;
+      line-height: 1.5;
+      outline: none;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .guide-textarea:focus {
+      border-color: var(--theme-accent);
+    }
+
+    /* シチュエーションボイス集 (案8) */
+    .voice-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .voice-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 10px;
+      border-left: 3px solid var(--theme-accent);
+    }
+    .voice-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    .voice-tag {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--theme-accent);
+      background: var(--theme-soft);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .voice-stage-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 10px;
+      color: var(--text-sub);
+      font-style: italic;
+      outline: none;
+      margin-bottom: 5px;
+    }
+    .voice-quote-area {
+      width: 100%;
+      min-height: 48px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 6px 8px;
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.5;
+      outline: none;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .voice-note-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      margin-top: 4px;
+      padding-top: 3px;
+      font-size: 9px;
+      color: var(--text-muted);
+      outline: none;
+    }
+
+    /* Lightboxモーダル (案6) */
+    .lightbox-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .lightbox-header {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff;
+    }
+    .lightbox-title {
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .lightbox-close-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .lightbox-close-btn:hover { background: rgba(255, 255, 255, 0.25); }
+    .lightbox-image-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-height: 75vh;
+      max-width: 90vw;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .lightbox-image {
+      max-height: 75vh;
+      max-width: 90vw;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .lightbox-outfit-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      max-width: 900px;
+      padding: 6px 12px;
+      background: rgba(22, 27, 36, 0.85);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .lightbox-outfit-btn {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-sub);
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .lightbox-outfit-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .lightbox-outfit-btn.active {
+      background: var(--theme-accent);
+      color: #111;
+      box-shadow: 0 2px 8px var(--theme-glow);
+    }
+
+    /* 相関図・呼び方マトリクス (案10) */
+    .matrix-table-wrap {
+      max-height: 60vh;
+      overflow: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    .matrix-table th, .matrix-table td {
+      border: 1px solid var(--border-color);
+      padding: 6px;
+      text-align: center;
+      min-width: 140px;
+    }
+    .matrix-table th {
+      background: var(--bg-surface);
+      color: #fff;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .matrix-cell-self {
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .matrix-in-call {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 10px;
+      padding: 3px 5px;
+      margin-bottom: 3px;
+      outline: none;
+    }
+    .matrix-in-relation {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+      color: var(--theme-accent);
+      font-size: 10px;
+      padding: 2px;
+      outline: none;
+    }
+
+    /* 立ち絵のホバーズーム表示 */
+    .portrait-stage {
+      cursor: zoom-in;
+      position: relative;
+    }
+    .portrait-zoom-hint {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .portrait-stage:hover .portrait-zoom-hint {
+      opacity: 1;
+    }
+
+    /* トースト */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #1e293b;
+      border: 1px solid var(--theme-accent);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body data-gender="female">
+
+  <!-- ヘッダー -->
+  <header>
+    <div class="header-left">
+      <div class="app-icon">📖</div>
+      <span class="app-title">Character Interview Studio</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="openAiPromptModal()" title="AIロールプレイ用の最高精度システムプロンプトを出力">🎭 AIプロンプト</button>
+      <button class="btn btn-secondary header-btn-desktop" onclick="openCrossTalkModal()" title="2人のキャラクターを選んで掛け合い対談・シナリオを作成">👥 2人掛け合い</button>
+      <button class="btn btn-secondary header-btn-desktop" onclick="openRelationMatrixModal()" title="キャラクター間の呼び方・関係性マトリクス表">🔗 相関マトリクス</button>
+      <button class="btn btn-secondary header-btn-desktop" onclick="openDocExportModal()" title="Markdownやテキスト、印刷形式で設定資料を一括書き出し">📄 資料出力</button>
+      <button class="btn btn-viewmode header-btn-desktop" id="viewModeToggleBtn" onclick="toggleViewMode()">📖 閲覧モード</button>
+      <button class="btn btn-secondary" onclick="openDataSyncModal()" title="PCとスマホ間の完全データ同期・バックアップ・復元">🔄 データ同期</button>
+      
+      <!-- スマホ用メニュー展開ボタン -->
+      <button class="btn btn-secondary mobile-menu-toggle" id="mobileMenuToggleBtn" onclick="toggleMobileMenu()">⚙️ メニュー</button>
+    </div>
+
+    <!-- スマホ用ドロップダウンメニュー -->
+    <div class="mobile-menu-dropdown" id="mobileMenuDropdown">
+      <button class="mobile-menu-item" onclick="openCrossTalkModal(); closeMobileMenu();">👥 2人掛け合い対談</button>
+      <button class="mobile-menu-item" onclick="openRelationMatrixModal(); closeMobileMenu();">🔗 相関図・呼び方表</button>
+      <button class="mobile-menu-item" onclick="openDocExportModal(); closeMobileMenu();">📄 設定資料エクスポート</button>
+      <button class="mobile-menu-item" onclick="toggleViewMode(); closeMobileMenu();">📖 閲覧モード切替</button>
+      <button class="mobile-menu-item" onclick="openDataSyncModal(); closeMobileMenu();">🔄 データ同期・完全バックアップ</button>
+    </div>
+  </header>
+
+  <!-- 上部：キャラクター保存棚 -->
+  <div class="char-shelf-bar">
+    <span class="shelf-label">👥 保存キャラ:</span>
+    <div id="charShelfList" style="display:flex; gap:6px; align-items:center;"></div>
+    <div class="shelf-add-btn" onclick="addNewCharacter()">＋ 新規キャラ</div>
+  </div>
+
+  <!-- 3カラムメインレイアウト（境界線ドラッグで横幅リサイズ可能） -->
+  <div class="three-column-layout" id="mainLayout">
+    
+    <!-- ==========================================================
+         【左カラム】ビジュアル＆衣装スタジオ
+         ========================================================== -->
+    <div class="column-panel" id="colLeft" style="width: 300px; flex-shrink: 0;">
+      
+      <!-- 立ち絵＆衣装カード -->
+      <div class="panel-card">
+        <!-- 服装バー（素で多数のプリセットを用意） -->
+        <div class="outfit-bar" id="outfitBar"></div>
+
+        <div class="portrait-stage" id="portraitStage" 
+             ondragover="handleDragOver(event)" 
+             ondragleave="handleDragLeave(event)" 
+             ondrop="handleDrop(event)"
+             onclick="onPortraitStageClick(event)">
+          <div class="portrait-zoom-hint">🔍 クリックで全画面鑑賞</div>
+          <img src="" id="portraitImg" class="portrait-img" style="display:none;" alt="Outfit Portrait" title="クリックして全画面鑑賞 (Lightbox)">
+          <div class="portrait-placeholder" id="portraitPlaceholder">
+            <span style="font-size:32px; opacity:0.8;">👗</span>
+            <span style="font-size:12px; font-weight:700;">衣装立ち絵をドロップ</span>
+            <span style="font-size:10px; color:var(--text-muted);">(クリックしてファイル選択)</span>
+          </div>
+          <input type="file" id="portraitFileInput" style="display:none" accept="image/*" onchange="handleFileSelect(event, 'outfit')">
+          
+          <div class="portrait-tools" onclick="event.stopPropagation()">
+            <button onclick="promptImageUrl('outfit')">🔗 URL</button>
+            <button onclick="clearCurrentOutfitImage()" style="color:#f87171;">✕ 削除</button>
+          </div>
+        </div>
+
+        <!-- 基本ネーム＆カラー＆保護操作 -->
+        <div class="char-control-card">
+          <input type="text" class="char-name-input" id="charNameInput" value="セレスティア" placeholder="キャラクター名" oninput="updateProfile('name', this.value)">
+          
+          <div class="control-row">
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span style="font-size:9px; font-weight:700; color:var(--text-muted);">COLOR:</span>
+              <input type="color" id="themeColorPicker" value="#f59e0b" style="width:20px; height:20px; border:none; background:none; cursor:pointer;" onchange="setCustomThemeColor(this.value)">
+            </div>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <span style="font-size:9px; font-weight:700; color:var(--text-muted);">FONT:</span>
+              <select id="charGenderSelect" class="dense-input" style="padding:1px 4px; font-size:10px;" onchange="updateGender(this.value)">
+                <option value="female">女性(手書き)</option>
+                <option value="male">男性(毛筆)</option>
+                <option value="other">中性(明朝)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="control-row" style="margin-top:2px; border-top:1px solid rgba(255,255,255,0.05); padding-top:6px;">
+            <button class="lock-btn" id="charLockBtn" onclick="toggleCharLock()">🔓 未保護 (削除可)</button>
+            <button class="del-char-btn" id="delCharBtn" onclick="deleteCurrentCharacter()">🗑️ キャラ削除</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 左と中央の境界リサイザー -->
+    <div class="resizer" id="resizer1" title="ドラッグして横幅を調整"></div>
+
+    <!-- ==========================================================
+         【中央カラム】超詳細キャラクターカルテ
+         ========================================================== -->
+    <div class="column-panel" id="colCenter" style="width: 520px; flex-shrink: 0;">
+      
+      <!-- 中央カラム サブタブ切替バー -->
+      <div class="center-subtabs">
+        <button class="center-subtab-btn active" id="tabBtnSheet" onclick="switchCenterTab('sheet')">📋 詳細カルテ</button>
+        <button class="center-subtab-btn" id="tabBtnRadar" onclick="switchCenterTab('radar')">📊 レーダーチャート</button>
+        <button class="center-subtab-btn" id="tabBtnVoice" onclick="switchCenterTab('voice')">🎙️ シチュエーションボイス</button>
+      </div>
+
+      <!-- ① 詳細カルテセクション -->
+      <div id="centerSheetSection">
+        <div class="center-top-bar">
+          <span style="font-size:12px; font-weight:700; color:#fff;">📋 キャラクター詳細設定カルテ</span>
+          <button class="btn btn-secondary" style="font-size:10px; padding:2px 7px;" onclick="addCustomTrait()">＋ 自由項目を追加</button>
+        </div>
+
+        <!-- ① 基本・身元・プロファイル -->
+        <div class="sheet-card">
+        <div class="sheet-card-title">👤 基本・身元・パーソナル</div>
+        <div class="dense-grid">
+          <div class="dense-item">
+            <span class="dense-label">二つ名・肩書</span>
+            <input type="text" class="dense-input" id="cs_alias" placeholder="例: 黄昏の銀狼" oninput="updateProfile('alias', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">年齢 / 外見年齢</span>
+            <input type="text" class="dense-input" id="cs_age" placeholder="例: 19歳 (外見17歳)" oninput="updateProfile('age', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">誕生日 / 星座 / 血液型</span>
+            <input type="text" class="dense-input" id="cs_birth" placeholder="例: 10月24日 / 蠍座 / A型" oninput="updateSheetField('birth', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">種族 / 出自・故郷</span>
+            <input type="text" class="dense-input" id="cs_race" placeholder="例: 人狼の血を引く亜人 / 北方山岳部" oninput="updateProfile('race', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">職業 / 社会的立場</span>
+            <input type="text" class="dense-input" id="cs_job" placeholder="例: 辺境調査員 / 護衛剣士" oninput="updateProfile('job', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">家族構成 / 現在の住まい</span>
+            <input type="text" class="dense-input" id="cs_family" placeholder="例: 天涯孤独 / ギルドの一室" oninput="updateSheetField('family', this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- ② 外見・体型・身体特徴 -->
+      <div class="sheet-card">
+        <div class="sheet-card-title">💃 外見・スタイル・身体特徴</div>
+        <div class="dense-grid">
+          <div class="dense-item">
+            <span class="dense-label">身長・体重・体型</span>
+            <input type="text" class="dense-input" id="cs_body_size" placeholder="例: 162cm / 48kg / しなやかな筋肉質" oninput="updateSheetField('body_size', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">スリーサイズ / 肌色</span>
+            <input type="text" class="dense-input" id="cs_three_size" placeholder="例: B84(C) W58 H86 / 色白" oninput="updateSheetField('three_size', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">髪型・髪色・瞳の色</span>
+            <input type="text" class="dense-input" id="cs_hair_eye" placeholder="例: 銀髪ショート、黄金色の瞳" oninput="updateSheetField('hair_eye', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">利き手 / 視力・特徴</span>
+            <input type="text" class="dense-input" id="cs_feature" placeholder="例: 右利き / 暗視可能、犬歯が鋭い" oninput="updateSheetField('feature', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">傷痕・痣・タトゥー</span>
+            <input type="text" class="dense-input" id="cs_scars" placeholder="例: 左太ももに獣の爪痕" oninput="updateSheetField('scars', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">香水・匂い・フェロモン</span>
+            <input type="text" class="dense-input" id="cs_smell" placeholder="例: 夜の森とほのかに甘い野薔薇の香り" oninput="updateSheetField('smell', this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 内面・性格・口調 -->
+      <div class="sheet-card">
+        <div class="sheet-card-title">🧠 内面・心理・口調</div>
+        <div class="dense-grid">
+          <div class="dense-item">
+            <span class="dense-label">一人称 / 二人称</span>
+            <input type="text" class="dense-input" id="cs_prono" placeholder="例: 私 / アンタ、お前" oninput="updateSheetField('prono', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">口調の特徴・語尾</span>
+            <input type="text" class="dense-input" id="cs_tone" placeholder="例: ぶっきらぼう、命令口調だが語尾が柔らかい" oninput="updateSheetField('tone', this.value)">
+          </div>
+          <div class="dense-item span-2">
+            <span class="dense-label">性格・二面性（表向きと本音）</span>
+            <input type="text" class="dense-input" id="cs_personality" placeholder="例: クールで無口を装うが、信頼した相手には世話焼きで甘え下手" oninput="updateSheetField('personality', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">長所・美徳</span>
+            <input type="text" class="dense-input" id="cs_merit" placeholder="例: 嘘をつかない、義理堅い、約束を守る" oninput="updateSheetField('merit', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">短所・精神的脆さ・トラウマ</span>
+            <input type="text" class="dense-input" id="cs_demerit" placeholder="例: 褒められるとパニック、見捨てられる恐怖" oninput="updateSheetField('demerit', this.value)">
+          </div>
+          <div class="dense-item span-2">
+            <span class="dense-label">声優・CVイメージ / 声色</span>
+            <input type="text" class="dense-input" id="cs_cv" placeholder="例: 澄んだ冷たさと微かな甘さを帯びたアルトボイス" oninput="updateProfile('cv', this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- ④ 日常・嗜好・能力 -->
+      <div class="sheet-card">
+        <div class="sheet-card-title">⚔️ 嗜好・日常・戦闘能力</div>
+        <div class="dense-grid">
+          <div class="dense-item">
+            <span class="dense-label">好物・好きなもの</span>
+            <input type="text" class="dense-input" id="cs_likes" placeholder="例: 焼きたての肉、静かな月夜" oninput="updateSheetField('likes', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">嫌いなもの・地雷</span>
+            <input type="text" class="dense-input" id="cs_dislikes" placeholder="例: 人混み、不意に尻尾を触られること" oninput="updateSheetField('dislikes', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">趣味・休日の過ごし方</span>
+            <input type="text" class="dense-input" id="cs_hobby" placeholder="例: 武器の手入れ、森で昼寝" oninput="updateSheetField('hobby', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">嗜好品（酒・タバコ・甘味）</span>
+            <input type="text" class="dense-input" id="cs_luxury" placeholder="例: 酒に弱い(飲むと甘え上戸に)、木苺が好き" oninput="updateSheetField('luxury', this.value)">
+          </div>
+          <div class="dense-item span-2">
+            <span class="dense-label">戦闘スタイル・主武器・弱点</span>
+            <input type="text" class="dense-input" id="cs_battle" placeholder="例: 銀の曲刀を用いた俊敏な連撃 / 銀の拘束具が弱点" oninput="updateSheetField('battle', this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑤ 恋愛観・夜の性向(NSFW) -->
+      <div class="sheet-card">
+        <div class="sheet-card-title">💋 恋愛観・夜の性向(NSFW)</div>
+        <div class="dense-grid">
+          <div class="dense-item">
+            <span class="dense-label">攻め／受け傾向</span>
+            <select class="dense-input" id="charPositionSelect" onchange="updateProfile('position', this.value)">
+              <option value="none">指定なし</option>
+              <option value="total_uke">完全な受け (屈服・流されやすい)</option>
+              <option value="strong_uke">強気な受け (ツンデレ・誘い)</option>
+              <option value="reversible">リバーシブル (どちらも可)</option>
+              <option value="gentle_seme">優しい攻め (包容力・リード)</option>
+              <option value="dominant_seme">支配的な攻め (強引・独占欲)</option>
+            </select>
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">好みのタイプ・恋愛観</span>
+            <input type="text" class="dense-input" id="cs_love_type" placeholder="例: 嘘をつかない誠実で強い人" oninput="updateSheetField('love_type', this.value)">
+          </div>
+          <div class="dense-item span-2">
+            <span class="dense-label">性感帯・身体の急所（上位3つ）</span>
+            <input type="text" class="dense-input" id="cs_body" placeholder="例: 1.狼耳の付け根 2.首筋とうなじ 3.腰のくびれ" oninput="updateProfile('body', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">フェチ・性癖</span>
+            <input type="text" class="dense-input" id="cs_fetish" placeholder="例: 首輪、耳元への囁き、甘やかし" oninput="updateSheetField('fetish', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">羞恥心 / 快楽屈服度</span>
+            <input type="text" class="dense-input" id="cs_shame" placeholder="例: 羞恥心強めだが、感じるとすぐに啼いて屈服" oninput="updateSheetField('shame', this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑥ 自由追加項目 -->
+      <div class="sheet-card">
+        <div class="sheet-card-title">
+          <span>✨ 自由追加項目</span>
+          <button class="btn btn-secondary" style="font-size:9px; padding:1px 5px; margin-left:auto;" onclick="addCustomTrait()">＋ 追加</button>
+        </div>
+        <div id="traitList"></div>
+      </div>
+      </div><!-- /#centerSheetSection -->
+
+      <!-- ② レーダーチャートセクション (表裏ダブル6軸 ＆ 総合タイプ診断 ＆ 5大トリセツ) -->
+      <div id="centerRadarSection" style="display:none;">
+        <div class="sheet-card">
+          <div class="sheet-card-title">
+            <span>📊 総合パラメータ ＆ 性格診断カルテ</span>
+            <span style="font-size:9px; color:var(--text-muted); font-weight:normal;">12軸ダブルチャート ＆ 公式トリセツ連動</span>
+          </div>
+
+          <!-- 総合タイプ診断バッジカード -->
+          <div class="radar-type-card" id="radarTypeCard">
+            <div class="radar-type-head">
+              <div class="radar-type-badge" id="radarTypeBadge">
+                <span id="radarTypeIcon">⚔️</span>
+                <span id="radarTypeName">孤高のツンデレ狼</span>
+              </div>
+              <div class="radar-type-sub" id="radarTypeSub">武闘派・羞恥心特化・クーデレ</div>
+            </div>
+            <div class="radar-type-desc" id="radarTypeDesc">
+              普段は鋭い眼光で周囲を威嚇するが、心を許した相手には不器用に世話を焼く。急所を撫でられるとプライドが崩れ去る。
+            </div>
+          </div>
+
+          <!-- 表・裏ステータス切り替えピルバー -->
+          <div class="radar-mode-tabs">
+            <button class="radar-mode-btn active" id="radarModeFrontBtn" onclick="switchRadarMode('front')">⚔️ 表ステータス (日常・冒険 6軸)</button>
+            <button class="radar-mode-btn" id="radarModeBackBtn" onclick="switchRadarMode('back')">💋 裏ステータス (恋愛・夜 6軸)</button>
+          </div>
+
+          <div class="radar-container">
+            <div class="radar-canvas-wrap">
+              <canvas id="radarCanvas" width="260" height="260"></canvas>
+            </div>
+
+            <!-- スライダーグリッド (JSで表裏に応じて動的描画) -->
+            <div class="radar-sliders-grid" id="radarSlidersContainer">
+              <!-- JSで生成 -->
+            </div>
+          </div>
+
+          <!-- 5大シチュエーション取扱説明書 (公式トリセツ) -->
+          <div class="guide-section">
+            <div class="guide-header-row">
+              <div>
+                <span style="font-size:12px; font-weight:700; color:#fff;">📖 キャラクター公式取扱説明書 (攻略トリセツ)</span>
+                <div style="font-size:9px; color:var(--text-muted);">ステータスから自動作文＆自由に加筆・修正可能（AIプロンプト連動）</div>
+              </div>
+              <button class="btn btn-secondary" style="font-size:9px; padding:2px 7px;" onclick="autoGenerateAllGuides()" title="現在のパラメータ傾向からおすすめトリセツを自動作文します">✨ 自動生成</button>
+            </div>
+
+            <div class="guide-grid" id="guideCardsContainer">
+              <!-- JSで5大シチュエーションカードを描画 -->
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /#centerRadarSection -->
+
+      <!-- ③ シチュエーションボイスセクション (案8) -->
+      <div id="centerVoiceSection" style="display:none;">
+        <div class="sheet-card">
+          <div class="sheet-card-title">
+            <span>🎙️ シチュエーション別「ボイス・決めセリフ集」</span>
+            <span style="font-size:9px; color:var(--text-muted); font-weight:normal;">ト書き＋セリフ（AIプロンプト自動反映）</span>
+          </div>
+
+          <div class="voice-grid" id="voiceGridContainer">
+            <!-- JSで各スロットを描画 -->
+          </div>
+        </div>
+      </div><!-- /#centerVoiceSection -->
+
+    </div>
+
+    <!-- 中央と右の境界リサイザー -->
+    <div class="resizer" id="resizer2" title="ドラッグして横幅を調整"></div>
+
+    <!-- ==========================================================
+         【右カラム】ジャンル別色分けインタビュー対談録
+         ========================================================== -->
+    <div class="column-panel" id="colRight" style="flex: 1; min-width: 320px;">
+      
+      <!-- ジャンル切り替えピルバー -->
+      <div class="genre-nav-bar" id="genreNavBar"></div>
+
+      <!-- 検索 ＆ 未回答フィルターバー (案4) -->
+      <div class="q-filter-bar">
+        <div class="q-search-box">
+          <span class="q-search-icon">🔍</span>
+          <input type="text" id="questionSearchInput" placeholder="質問をキーワード検索 (例: 弱点、キス、本音)..." oninput="onSearchInput(this.value)">
+          <span class="q-search-clear" id="searchClearBtn" onclick="clearSearchInput()">✕</span>
+        </div>
+        <div class="q-filter-chips">
+          <div class="filter-chip active" id="filterChip_all" onclick="setQuestionFilter('all')">全て (<span id="count_all">0</span>)</div>
+          <div class="filter-chip" id="filterChip_unanswered" onclick="setQuestionFilter('unanswered')">⚪ 未回答 (<span id="count_unanswered">0</span>)</div>
+          <div class="filter-chip" id="filterChip_answered" onclick="setQuestionFilter('answered')">🟢 回答済 (<span id="count_answered">0</span>)</div>
+        </div>
+      </div>
+
+      <!-- 選択中ジャンルのヘッダーバナー -->
+      <div class="genre-hero-banner" id="genreHeroBanner">
+        <div>
+          <div class="genre-hero-title" id="curGenreTitle">Chapter 01: 日常と素顔</div>
+          <div class="genre-hero-desc" id="curGenreDesc">普段の生活リズム、口調、癖、素の表情を掘り下げる</div>
+        </div>
+        <button class="btn btn-secondary" style="font-size:10px; padding:2px 7px;" onclick="openAddQModal()">＋ 質問を追加</button>
+      </div>
+
+      <!-- 選択中ジャンルの質問一覧 -->
+      <div id="activeQuestionsContainer"></div>
+
+    </div>
+
+  </div>
+
+  <!-- モバイル用ボトムナビゲーション (幅860px以下で表示) -->
+  <nav class="mobile-bottom-nav" id="mobileBottomNav">
+    <button class="mobile-nav-btn active" id="mobNavBtnLeft" onclick="switchMobileCol('left')">
+      <span class="mob-icon">👤</span>
+      <span class="mob-text">立ち絵・基本</span>
+    </button>
+    <button class="mobile-nav-btn" id="mobNavBtnCenter" onclick="switchMobileCol('center')">
+      <span class="mob-icon">📋</span>
+      <span class="mob-text">カルテ・レーダー</span>
+    </button>
+    <button class="mobile-nav-btn" id="mobNavBtnRight" onclick="switchMobileCol('right')">
+      <span class="mob-icon">💬</span>
+      <span class="mob-text">質問・対話</span>
+    </button>
+  </nav>
+
+  <!-- ⑥ PC/スマホ データ同期・完全バックアップ モーダル -->
+  <div class="modal-overlay" id="dataSyncModal" onclick="closeDataSyncModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">
+        <span>🔄 データ同期 ＆ 完全バックアップ</span>
+        <button class="btn btn-secondary" style="font-size:10px;" onclick="closeDataSyncModalDirect()">✕ 閉じる</button>
+      </div>
+      <div class="modal-desc">PCとスマホ間でのデータ共有やバックアップを行えます。立ち絵画像もまとめて移行できる「完全バックアップ」に対応しています。</div>
+
+      <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+        <!-- 完全バックアップ（画像込み） -->
+        <div style="background:rgba(245, 158, 11, 0.08); border:1px solid var(--theme-accent); border-radius:8px; padding:12px;">
+          <div style="font-size:12px; font-weight:700; color:var(--theme-accent); margin-bottom:4px;">📦 完全バックアップ (立ち絵画像も全内包)</div>
+          <div style="font-size:11px; color:var(--text-sub); margin-bottom:8px;">設定したキャラクター・カルテ・質問回答に加え、登録したすべての立ち絵画像もまるごと1つのJSONファイルに保存します。PCからスマホへの一発移行に最適です。</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary" onclick="exportFullDataWithImages()">📦 完全バックアップ保存</button>
+            <button class="btn btn-secondary" onclick="triggerFullImport()">📥 完全バックアップ復元</button>
+            <input type="file" id="fullFileImporter" style="display:none" accept=".json" onchange="importFullDataWithImages(event)">
+          </div>
+        </div>
+
+        <!-- 通常バックアップ（テキストのみ・軽量） -->
+        <div style="background:rgba(255, 255, 255, 0.03); border:1px solid var(--border-color); border-radius:8px; padding:12px;">
+          <div style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:4px;">💾 通常バックアップ (設定テキストのみ・軽量)</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-bottom:8px;">立ち絵画像を除いたカルテ・回答・設定情報のみを軽量なJSONファイルとして保存・読み込みします。</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary" onclick="exportData()">💾 軽量JSON保存</button>
+            <button class="btn btn-secondary" onclick="triggerImport()">📂 軽量JSON読込</button>
+            <input type="file" id="fileImporter" style="display:none" accept=".json" onchange="importData(event)">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:14px;">
+        <button class="btn btn-secondary" onclick="closeDataSyncModalDirect()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新規質問追加モーダル -->
+  <div class="modal-overlay" id="addQuestionModal" onclick="closeAddQModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">＋ 質問の新規追加</div>
+      <div class="modal-desc" id="modalChapterTargetDesc">現在の章に新しいインタビュー質問を追加します。</div>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
+        <div>
+          <label style="font-size:10px; color:var(--text-muted); font-weight:700;">質問タイトル (必須)</label>
+          <input type="text" id="newQTitle" class="dense-input" style="width:100%; padding:5px 8px;" placeholder="例: 一番大切にしている宝物は？">
+        </div>
+        <div>
+          <label style="font-size:10px; color:var(--text-muted); font-weight:700;">着眼点・深掘りガイド</label>
+          <input type="text" id="newQGuide" class="dense-input" style="width:100%; padding:5px 8px;" placeholder="例: 宝物の由来、手に入れたきっかけなど">
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:6px;">
+        <button class="btn btn-secondary" onclick="closeAddQModalDirect()">キャンセル</button>
+        <button class="btn btn-primary" onclick="submitNewQuestion()">追加する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Geminiプロンプト出力モーダル -->
+  <div class="modal-overlay" id="promptModal" onclick="closeModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-title">🤖 Geminiインタビュー プロンプト</div>
+      <div class="modal-desc">このプロンプトをGeminiに渡すと、キャラの性格・口調・ト書き付きで答えてくれます。</div>
+      <textarea class="modal-area" id="promptModalText" readonly></textarea>
+      
+      <div style="border-top: 1px solid var(--border-color); padding-top: 6px;">
+        <div style="font-size:10px; font-weight:700; color:var(--theme-accent); margin-bottom:4px;">📥 Geminiの返答を取り込む:</div>
+        <textarea class="modal-area" id="geminiReplyInput" style="height:55px;" placeholder="Geminiからの回答文をここに貼り付けて「反映する」を押すと、ト書きとセリフに自動反映します"></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+        <button class="btn btn-primary" onclick="copyPromptText()">📋 コピー</button>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-secondary" onclick="applyGeminiReply()">反映する</button>
+          <button class="btn btn-secondary" onclick="closePromptModal()">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ① Lightbox全画面立ち絵鑑賞モーダル (案6) -->
+  <div class="lightbox-overlay" id="lightboxModal" onclick="closeLightbox(event)">
+    <div class="lightbox-header" onclick="event.stopPropagation()">
+      <div class="lightbox-title">
+        <span id="lightboxCharName">キャラクター名</span>
+        <span style="font-size:12px; font-weight:normal; color:var(--text-muted);" id="lightboxOutfitName">（私服）</span>
+      </div>
+      <button class="lightbox-close-btn" onclick="closeLightboxDirect()" title="閉じる (ESC)">✕</button>
+    </div>
+
+    <div class="lightbox-image-wrap" onclick="event.stopPropagation()">
+      <img id="lightboxImg" class="lightbox-image" src="" alt="Full Standing View">
+    </div>
+
+    <div class="lightbox-outfit-bar" id="lightboxOutfitBar" onclick="event.stopPropagation()">
+      <!-- 衣装切り替えピルをJSで生成 -->
+    </div>
+  </div>
+
+  <!-- ② AIロールプレイ「なりきりシステムプロンプト」モーダル (案1) -->
+  <div class="modal-overlay" id="aiPromptModal" onclick="closeAiPromptModal(event)">
+    <div class="modal-box modal-box-large" onclick="event.stopPropagation()">
+      <div class="modal-title">
+        <span>🎭 AIロールプレイ用「なりきりシステムプロンプト」</span>
+        <button class="btn btn-secondary" style="font-size:10px;" onclick="closeAiPromptModalDirect()">✕ 閉じる</button>
+      </div>
+      <div class="modal-desc">詳細カルテ、レーダーパラメータ、シチュエーションセリフ、インタビュー回答をGeminiやChatGPTの「System Instructions」として最適フォーマット化しました。</div>
+      <textarea class="modal-area" id="aiPromptOutput" style="height:260px; font-size:11px; line-height:1.6;" readonly></textarea>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <div style="font-size:10px; color:var(--text-muted);">※ コピーして Gemini の「システム指示」や各AIチャットに貼り付けてください。</div>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-primary" onclick="copyAiPromptText()">📋 プロンプトをコピー</button>
+          <button class="btn btn-secondary" onclick="downloadAiPromptText()">💾 .txtで保存</button>
+          <button class="btn btn-secondary" onclick="closeAiPromptModalDirect()">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 2キャラ掛け合い・関係性対談モード モーダル (案2) -->
+  <div class="modal-overlay" id="crossTalkModal" onclick="closeCrossTalkModal(event)">
+    <div class="modal-box modal-box-large" onclick="event.stopPropagation()">
+      <div class="modal-title">
+        <span>👥 2キャラ掛け合い・関係性対談スタジオ</span>
+        <button class="btn btn-secondary" style="font-size:10px;" onclick="closeCrossTalkModalDirect()">✕ 閉じる</button>
+      </div>
+      <div class="modal-desc">登録されている2体のキャラクターを選択し、相互の呼び方・関係性を踏まえた「掛け合い対談プロンプト」を生成・ログ保存します。</div>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;">
+        <!-- キャラ1 -->
+        <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:8px; padding:10px;">
+          <div style="font-size:11px; font-weight:700; color:var(--theme-accent); margin-bottom:6px;">👤 キャラクター A</div>
+          <select id="crossCharSelectA" class="dense-input" style="width:100%; margin-bottom:6px;" onchange="onCrossCharChange()"></select>
+          <div style="font-size:10px; color:var(--text-muted); margin-bottom:2px;">Bへの呼び方 / 印象</div>
+          <input type="text" id="crossCallAtoB" class="dense-input" style="width:100%;" placeholder="例: お前、頼りになる相棒">
+        </div>
+        <!-- キャラ2 -->
+        <div style="background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:8px; padding:10px;">
+          <div style="font-size:11px; font-weight:700; color:#38bdf8; margin-bottom:6px;">👤 キャラクター B</div>
+          <select id="crossCharSelectB" class="dense-input" style="width:100%; margin-bottom:6px;" onchange="onCrossCharChange()"></select>
+          <div style="font-size:10px; color:var(--text-muted); margin-bottom:2px;">Aへの呼び方 / 印象</div>
+          <input type="text" id="crossCallBtoA" class="dense-input" style="width:100%;" placeholder="例: 先輩、生意気だけど放っておけない">
+        </div>
+      </div>
+
+      <!-- 対談テーマ -->
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px; font-weight:700; color:var(--text-main); margin-bottom:4px;">💬 掛け合いのテーマ・お題:</div>
+        <input type="text" id="crossTalkTopic" class="dense-input" style="width:100%;" placeholder="例: 初めて背中を預けて戦ったときの思い出、お互いの弱点について">
+      </div>
+
+      <!-- 生成プロンプト -->
+      <div style="margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <span style="font-size:10px; font-weight:700; color:var(--theme-accent);">🤖 Gemini用 掛け合い生成プロンプト:</span>
+          <button class="btn btn-secondary" style="font-size:9px; padding:1px 6px;" onclick="generateCrossTalkPrompt()">✨ プロンプト再生成</button>
+        </div>
+        <textarea class="modal-area" id="crossTalkPromptOutput" style="height:90px; font-size:11px;" readonly></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
+          <button class="btn btn-primary" style="font-size:10px;" onclick="copyCrossTalkPrompt()">📋 プロンプトをコピー</button>
+        </div>
+      </div>
+
+      <!-- 対話ログ保存エリア -->
+      <div style="border-top:1px solid var(--border-color); padding-top:8px;">
+        <div style="font-size:10px; font-weight:700; color:var(--text-main); margin-bottom:4px;">📝 掛け合い対談ログ（Geminiの生成結果を記録・保存）:</div>
+        <textarea class="modal-area" id="crossTalkLogInput" style="height:100px; font-size:11px;" placeholder="Geminiが出力した二人の会話劇をここにペーストして保存できます..."></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:8px;">
+        <button class="btn btn-primary" onclick="saveCrossTalkLog()">💾 対談ログを保存</button>
+        <button class="btn btn-secondary" onclick="closeCrossTalkModalDirect()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 複数キャラの「相関図・呼び方マトリクス」モーダル (案10) -->
+  <div class="modal-overlay" id="relationMatrixModal" onclick="closeRelationMatrixModal(event)">
+    <div class="modal-box modal-box-large" onclick="event.stopPropagation()">
+      <div class="modal-title">
+        <span>🔗 キャラクター相関図 ＆ 呼び方マトリクス</span>
+        <button class="btn btn-secondary" style="font-size:10px;" onclick="closeRelationMatrixModalDirect()">✕ 閉じる</button>
+      </div>
+      <div class="modal-desc">キャラクターが増えた際にも一目でわかる、縦軸（誰から）×横軸（誰へ）の「呼び方」と「関係性（矢印）」の一元管理表です。入力内容は自動保存されます。</div>
+
+      <div class="matrix-table-wrap" id="matrixTableContainer">
+        <!-- JSで表を生成 -->
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <div style="font-size:10px; color:var(--text-muted);">※ 上段：相手の呼び方（例: ○○さん、あいつ） / 下段：関係性（例: 信頼、警戒、主従）</div>
+        <button class="btn btn-secondary" onclick="closeRelationMatrixModalDirect()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 設定資料エクスポート モーダル (案3) -->
+  <div class="modal-overlay" id="docExportModal" onclick="closeDocExportModal(event)">
+    <div class="modal-box modal-box-large" onclick="event.stopPropagation()">
+      <div class="modal-title">
+        <span>📄 キャラクター設定資料 ＆ インタビュー録 エクスポート</span>
+        <button class="btn btn-secondary" style="font-size:10px;" onclick="closeDocExportModalDirect()">✕ 閉じる</button>
+      </div>
+      <div class="modal-desc">現在のキャラクターの全カルテ、パラメータ、シチュエーションボイス、回答済みインタビューを整形した設定資料です。</div>
+
+      <div style="display:flex; gap:6px; margin-bottom:8px;">
+        <button class="btn btn-secondary active" id="exportTabMarkdownBtn" onclick="switchExportFormat('markdown')">Markdown形式 (.md)</button>
+        <button class="btn btn-secondary" id="exportTabTextBtn" onclick="switchExportFormat('text')">プレーンテキスト (.txt)</button>
+      </div>
+
+      <textarea class="modal-area" id="docExportOutput" style="height:250px; font-size:11px; line-height:1.6;" readonly></textarea>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <button class="btn btn-secondary" onclick="printCharacterDoc()">🖨️ 印刷 / PDFプレビュー</button>
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-primary" onclick="copyDocExportText()">📋 資料をコピー</button>
+          <button class="btn btn-secondary" onclick="downloadDocExportFile()">💾 ファイル保存</button>
+          <button class="btn btn-secondary" onclick="closeDocExportModalDirect()">閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト -->
+  <div class="toast" id="toastBox">
+    <span>✔</span> <span id="toastMsg">通知メッセージ</span>
+  </div>
+
+  <script>
+    /* ==========================================================
+       IndexedDB ストレージヘルパー
+       ========================================================== */
+    const DB_NAME = "CharInterviewNoteDB";
+    const DB_VERSION = 1;
+    let dbInstance = null;
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        if (dbInstance) return resolve(dbInstance);
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("images")) {
+            db.createObjectStore("images");
+          }
+        };
+        req.onsuccess = (e) => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+        req.onerror = (e) => reject(e);
+      });
+    }
+
+    async function saveImageToDB(key, dataUrl) {
+      const db = await openDatabase();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction("images", "readwrite");
+        const store = tx.objectStore("images");
+        store.put(dataUrl, key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = (e) => reject(e);
+      });
+    }
+
+    async function getImageFromDB(key) {
+      const db = await openDatabase();
+      return new Promise((resolve) => {
+        const tx = db.transaction("images", "readonly");
+        const store = tx.objectStore("images");
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    async function deleteImageFromDB(key) {
+      const db = await openDatabase();
+      return new Promise((resolve) => {
+        const tx = db.transaction("images", "readwrite");
+        const store = tx.objectStore("images");
+        store.delete(key);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    }
+
+    async function getAllImagesFromDB() {
+      const db = await openDatabase();
+      return new Promise((resolve) => {
+        const tx = db.transaction("images", "readonly");
+        const store = tx.objectStore("images");
+        const imageMap = {};
+        const req = store.openCursor();
+        req.onsuccess = (e) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            imageMap[cursor.key] = cursor.value;
+            cursor.continue();
+          } else {
+            resolve(imageMap);
+          }
+        };
+        req.onerror = () => resolve({});
+      });
+    }
+
+    async function saveMultipleImagesToDB(imageMap) {
+      if (!imageMap || typeof imageMap !== 'object') return;
+      const db = await openDatabase();
+      return new Promise((resolve) => {
+        const tx = db.transaction("images", "readwrite");
+        const store = tx.objectStore("images");
+        for (const [k, v] of Object.entries(imageMap)) {
+          if (v) store.put(v, k);
+        }
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    }
+
+    /* ==========================================================
+       全10ジャンル（特大ボリューム質問データ）
+       ========================================================== */
+    const GENRE_DEFINITIONS = [
+      { id: "ch01", title: "日常と素顔", color: "#10b981", desc: "普段の生活リズム、口調、癖、素の表情を掘り下げる" },
+      { id: "ch02", title: "人間関係", color: "#06b6d4", desc: "人との距離感、初対面への警戒心、信頼の置き方" },
+      { id: "ch03", title: "生い立ちと過去", color: "#d97706", desc: "今の性格を形作ったルーツ、家族関係、トラウマ" },
+      { id: "ch04", title: "価値観と信念", color: "#8b5cf6", desc: "生きる目的、正義感、絶対に譲れない矜持" },
+      { id: "ch05", title: "職場と立場", color: "#64748b", desc: "仕事に対するプロ意識、同僚・上司・部下との関わり" },
+      { id: "ch06", title: "私生活と休日", color: "#f97316", desc: "誰の目も届かないプライベート、無防備なひととき (全18問)" },
+      { id: "ch07", title: "感情と脆さ", color: "#0284c7", desc: "涙の理由、怒りのツボ、思わず崩れてしまう脆さ" },
+      { id: "ch08", title: "恋愛観・好意", color: "#ec4899", desc: "恋に落ちたときの変化、独占欲、好意のサイン (全18問)" },
+      { id: "ch09", title: "夜の性向・急所", color: "#e11d48", desc: "NSFW / 深層のセンシティブな官能・弱点・性的フェチ (全20問)" },
+      { id: "ch10", title: "極限状態・IF", color: "#eab308", desc: "命の危機、もしもの世界、キャラクターの底力" }
+    ];
+
+    const DEFAULT_QUESTIONS_MAP = {
+      "ch01": [
+        { id: "q1_1", title: "朝起きて一番にすることは？", guide: "目覚めの良さ、寝起きの機嫌、朝のルーティン" },
+        { id: "q1_2", title: "普段の口調や一人称・二人称は？", guide: "親しい相手と初対面での口調の変化、声のトーン" },
+        { id: "q1_3", title: "無意識に出てしまう口癖や仕草は？", guide: "考え事をするとき、動揺したときの手の動き" },
+        { id: "q1_4", title: "好きな食べ物・嫌いな食べ物は？", guide: "味覚の好み、偏食、食事のマナー" },
+        { id: "q1_5", title: "部屋の整頓具合は？私物は多い？", guide: "綺麗好きか大雑把か、収集癖のあるもの" },
+        { id: "q1_6", title: "インドア派？アウトドア派？", guide: "家での過ごし方、外に出たがる理由" },
+        { id: "q1_7", title: "お酒や嗜好品（甘いもの・タバコ等）は嗜む？", guide: "酔ったときの変化、依存しているもの" },
+        { id: "q1_8", title: "体力や運動神経、健康状態は？", guide: "疲れやすさ、持病、身体能力の限界" },
+        { id: "q1_9", title: "普段どんな服装・身だしなみを好む？", guide: "こだわり、露出度、着心地重視か見栄え重視か" },
+        { id: "q1_10", title: "一日の中で一番落ち着く時間は？", guide: "深夜の静寂、黄昏時、誰かといる時間" },
+        { id: "q1_11", title: "暑がり？それとも寒がり？", guide: "季節の変わり目の過ごし方、肌寒さを感じたときの仕草" },
+        { id: "q1_12", title: "他人からよく言われる『第一印象』と『実際の性格』のギャップは？", guide: "怖そうに見えて優しい、真面目そうに見えて抜けているなど" }
+      ],
+      "ch02": [
+        { id: "q2_1", title: "初対面の人に対してどんな態度を取る？", guide: "愛想が良いか、警戒して距離を置くか、見下すか" },
+        { id: "q2_2", title: "心から信頼している相手はいる？", guide: "家族、相棒、親友、あるいは誰も信じないか" },
+        { id: "q2_3", title: "他人に甘えたり頼ったりすることは得意？", guide: "一人で抱え込むタイプか、甘え上手か" },
+        { id: "q2_4", title: "集団の中での立ち位置は？", guide: "リーダー、参謀、ムードメーカー、孤高の一匹狼" },
+        { id: "q2_5", title: "裏切りや嘘を経験したことはある？", guide: "人間不信の根底にあるもの、許せない嘘のライン" },
+        { id: "q2_6", title: "自分に向けられる好意や賞賛をどう受け止める？", guide: "照れる、疑う、当然として受け取る、戸惑う" },
+        { id: "q2_7", title: "誰かに嫉妬や劣等感を抱くことはある？", guide: "憧れと嫉妬の対象、プライドの傷つきやすさ" },
+        { id: "q2_8", title: "大切な人と意見が衝突したときどう仲直りする？", guide: "謝れるか、意地を張るか、行動で示すか" },
+        { id: "q2_9", title: "他人に秘密を打ち明ける基準は？", guide: "どこまで親しくなれば過去や弱みを語れるか" },
+        { id: "q2_10", title: "苦手な人間・どうしても合わないタイプの人間は？", guide: "生理的嫌悪、相性の悪い性格" }
+      ],
+      "ch03": [
+        { id: "q3_1", title: "生まれ育った環境や家庭の温もりは？", guide: "裕福か貧困か、愛情に恵まれたか、過酷だったか" },
+        { id: "q3_2", title: "幼少期の夢や憧れていた人物は？", guide: "かつて思い描いていた未来と現実のギャップ" },
+        { id: "q3_3", title: "人生最大の挫折や失意の経験は？", guide: "立ち直るきっかけ、今も引きずっている傷" },
+        { id: "q3_4", title: "身体に残る傷痕や痣の由来は？", guide: "古傷の痛み、それにまつわるエピソード" },
+        { id: "q3_5", title: "これまでの人生で最も嬉しかった出来事は？", guide: "今でも思い出すと胸が温かくなる記憶" },
+        { id: "q3_6", title: "誰にも話したことのない過去の罪や過ちは？", guide: "悔恨の念、贖罪の意識" },
+        { id: "q3_7", title: "過去に戻れるとしたら、いつに戻って何をやり直したい？", guide: "後悔している選択、運命の分かれ道" },
+        { id: "q3_8", title: "幼い頃の自分の性格は、今とどう違っていた？", guide: "無邪気だったか、大人びていたか、内向的だったか" },
+        { id: "q3_9", title: "故郷の風景や思い出の味として心に残っているものは？", guide: "郷愁の念、もう二度と帰れない場所" }
+      ],
+      "ch04": [
+        { id: "q4_1", title: "生きる上で最も大切にしているモットーは？", guide: "座右の銘、心の柱にしている信念" },
+        { id: "q4_2", title: "『正義』と『悪』の境界線をどう捉えている？", guide: "清濁併せ呑むか、厳格な潔癖さか" },
+        { id: "q4_3", title: "自分の命と大切な人の命、どちらを優先する？", guide: "自己犠牲の精神、生への執着" },
+        { id: "q4_4", title: "お金や権力に対する価値観は？", guide: "手段と割り切るか、嫌悪するか、渇望するか" },
+        { id: "q4_5", title: "神や運命、奇跡といった存在を信じる？", guide: "現実主義か、祈りを捧げる対象があるか" },
+        { id: "q4_6", title: "『美しさ』や『強さ』をどう定義する？", guide: "精神的な強さか、武力か、生き様の美学か" },
+        { id: "q4_7", title: "許せない人間のタイプや行動は？", guide: "生理的嫌悪、道徳的怒りを呼ぶトリガー" },
+        { id: "q4_8", title: "最期の瞬間、どんな死に方を迎えたい？", guide: "穏やかな天寿、戦場での散り際、誰かに看取られたいか" }
+      ],
+      "ch05": [
+        { id: "q5_1", title: "現在の仕事・役職を選んだ理由と本音は？", guide: "天職と思っているか、生活のためと割り切っているか" },
+        { id: "q5_2", title: "仕事中の立ち居振る舞いやオンオフの切り替えは？", guide: "私生活とは別人のように冷徹・丁寧になるか" },
+        { id: "q5_3", title: "上司や目上の人物に対する接し方は？", guide: "従順、敬意、内心の反骨心、利用価値の品定め" },
+        { id: "q5_4", title: "部下や後輩、弟子に対する接し方は？", guide: "厳格な指導、過保護、不器用な優しさ、放任" },
+        { id: "q5_5", title: "職場の机や作業道具へのこだわりは？", guide: "道具の手入れ、整理整頓、手放せない私物" },
+        { id: "q5_6", title: "仕事で最もプレッシャーや責任を感じる瞬間は？", guide: "重圧に対する耐性、責任の背負い込み方" },
+        { id: "q5_7", title: "仕事仲間やチームとの距離感・信頼度は？", guide: "ビジネスライクか、家族のような絆か" },
+        { id: "q5_8", title: "もしこの仕事を辞めたら、どんな生活を送りたい？", guide: "密かな引退後の夢、平和への憧れ" }
+      ],
+
+      /* 6. 私生活と休日 (18問) */
+      "ch06": [
+        { id: "q6_1", title: "完全オフの休日は何時に起きて二度寝する？", guide: "朝の怠惰な過ごし方、目覚まし時計を止めたあとの微睡み" },
+        { id: "q6_2", title: "寝るときの格好・パジャマや下着のこだわりは？", guide: "ゆったりしたTシャツ、下着のみ、可愛い部屋着、締め付けの嫌いさ" },
+        { id: "q6_3", title: "自宅・私室のインテリアやベッド周りの愛用品は？", guide: "抱き枕、手放せないぬいぐるみ、薄暗い間接照明、殺風景さ" },
+        { id: "q6_4", title: "家事（自炊・洗濯・掃除）の腕前と生活力は？", guide: "得意料理、壊滅的な味覚、部屋が散らかりがちか綺麗好きか" },
+        { id: "q6_5", title: "お風呂・入浴タイムの過ごし方とこだわりは？", guide: "長風呂でぼーっとする、カラスの行水、お気に入りの入浴剤・石鹸の香り" },
+        { id: "q6_6", title: "一人きりの時にふと零れる独り言や無防備な癖は？", guide: "鼻歌、ぬいぐるみやペットへの語りかけ、奇妙な体勢でのストレッチ" },
+        { id: "q6_7", title: "買い物に行くときの基準は？衝動買いするタイプ？", guide: "じっくり吟味する、直感で即買い、値札を見てため息をつく" },
+        { id: "q6_8", title: "誰にも教えたくない『秘密のお気に入りの場所』はある？", guide: "屋根の上、路地裏のカフェ、森の奥の泉、静かな図書館の隅" },
+        { id: "q6_9", title: "休日の朝食・昼食に何を食べるのが一番幸せ？", guide: "焼きたてパン、昨夜の残り物、贅沢なスイーツ、食べずに寝続ける" },
+        { id: "q6_10", title: "雨の日の休日はどんな風に過ごす？", guide: "雨音を聞きながら読書、一日中ベッドで丸まる、雨上がりの匂いを嗅ぐ" },
+        { id: "q6_11", title: "体調を崩して寝込んだとき、どんな風に弱る？", guide: "意地を張って平気を装う、心細くなって誰かに甘えたがる、普段と別人のような潤んだ瞳" },
+        { id: "q6_12", title: "お気に入りの私物や、長年捨てられない宝物は？", guide: "ボロボロの毛布、誰かからもらったキーホルダー、使い込んだマグカップ" },
+        { id: "q6_13", title: "夜更かしをする理由と、深夜についやってしまうことは？", guide: "深夜の読書・創作、ぼんやり夜空を見つめる、夜食のつまみ食い" },
+        { id: "q6_14", title: "ベッドに入ってから眠りに落ちるまでの思考は？", guide: "明日の心配、楽しかった思い出の反芻、妄想に耽る、一瞬で爆睡" },
+        { id: "q6_15", title: "もし突然丸一日『完全な自由時間』をもらったら？", guide: "遠くへ一人旅、一日中誰かと密着してダラダラ、趣味に全没頭" },
+        { id: "q6_16", title: "休日の終わり（日曜の夜など）を感じたとき、どんな気分になる？", guide: "現実に引き戻される溜息、明日への気合いの入れ直し、もう少し起きていたい駄々" },
+        { id: "q6_17", title: "普段人前では絶対に着ないような『部屋着の姿』は？", guide: "着古して穴の空いた服、サイズがぶかぶかの服、恥ずかしい柄のパジャマ" },
+        { id: "q6_18", title: "誰かが自宅に急に遊びに来ることになったらどう反応する？", guide: "パニックで慌てて物を押し入れに隠す、平然と迎え入れる、居留守を使う" }
+      ],
+
+      "ch07": [
+        { id: "q7_1", title: "どんなことで激怒する？怒るとどう変化する？", guide: "声を荒げる、静かに冷たくなる、破壊衝動" },
+        { id: "q7_2", title: "最後に涙を流したのはいつ？その理由は？", guide: "悲しみ、悔しさ、感動、安堵の涙" },
+        { id: "q7_3", title: "心から恐怖を感じるもの・苦手なものは？", guide: "特定の生物、暗闇、孤独、見捨てられること" },
+        { id: "q7_4", title: "精神的に限界を迎えたとき、どんなサインが出る？", guide: "過呼吸、引きこもり、不眠、暴飲暴食、自傷衝動" },
+        { id: "q7_5", title: "照れ隠しをするとき、どんな態度をとる？", guide: "そっぽを向く、攻撃的になる、饒舌になる" },
+        { id: "q7_6", title: "自分の容姿や性格でコンプレックスに感じている部分は？", guide: "目つき、傷跡、不器用さ、臆病なところ" },
+        { id: "q7_7", title: "他人に触れられたくない『地雷』の話題は？", guide: "触れた瞬間に空気が凍る過去や禁句" },
+        { id: "q7_8", title: "心が疲れたとき、誰にどんな風に慰めてほしい？", guide: "ただ抱きしめてほしい、何も聞かず側にいてほしい" }
+      ],
+
+      /* 8. 恋愛観と好意 (18問) */
+      "ch08": [
+        { id: "q8_1", title: "初恋の思い出や、これまでの恋愛経験・トラウマは？", guide: "淡い記憶、全くの未経験、手痛い失恋の古傷" },
+        { id: "q8_2", title: "一目惚れするタイプ？それとも時間をかけて惹かれるタイプ？", guide: "容姿や直感で落ちるか、相手の人柄や誠実さを知ってから落ちるか" },
+        { id: "q8_3", title: "惹かれる相手の外見フェチや声・仕草のツボは？", guide: "綺麗な指先、低い声、鎖骨、髪をかきあげる仕草、ギャップのある笑顔" },
+        { id: "q8_4", title: "好きな人ができると、態度や行動にどう変化が現れる？", guide: "無意識に目で追う、逆に冷たく接してしまう、不器用に世話を焼く" },
+        { id: "q8_5", title: "好きな人の前でテンパって空回りした経験や癖は？", guide: "口ごもる、噛みまくる、耳まで真っ赤になって逃げ出す、強がって後悔" },
+        { id: "q8_6", title: "嫉妬や独占欲は強い方？ヤキモチを焼くとどうなる？", guide: "あからさまに不機嫌になる、押し黙る、無理に笑顔を作る、急に甘えて束縛する" },
+        { id: "q8_7", title: "スキンシップ（手繋ぎ、ハグ、頭ぽんぽん）への抵抗感と本音は？", guide: "人前では拒否するが二人きりなら求めてしまう、触れられるだけで硬直する" },
+        { id: "q8_8", title: "告白は自分からする派？それとも言わせたい派？", guide: "ストレートに伝える度胸があるか、回りくどく好意を匂わせるか、耐えきれず待つか" },
+        { id: "q8_9", title: "理想のデートシチュエーションや二人きりで過ごしたい場所は？", guide: "賑やかなお祭り、静かな夜の散歩、部屋で映画を見ながら肩を寄せ合う" },
+        { id: "q8_10", title: "恋人に甘えるとき、どんな言動や仕草になる？", guide: "服の裾を掴む、肩に頭を預ける、言葉にできず無言で密着して見つめる" },
+        { id: "q8_11", title: "恋人の前で弱音を吐いたり、泣き顔を見せることはできる？", guide: "絶対にプライドが許さないか、その人の前でだけ涙腺が崩壊してしまうか" },
+        { id: "q8_12", title: "記念日や誕生日、相手へのプレゼントへのこだわりは？", guide: "手作りの品、相手が欲しがっていたものを密かにリサーチ、照れながら渡す" },
+        { id: "q8_13", title: "相手のどんな言葉や仕草に一番ドキッとして胸が高鳴る？", guide: "不意に名前を呼び捨てにされる、至近距離で見つめられる、頭を撫でられる" },
+        { id: "q8_14", title: "恋人と喧嘩や意見のすれ違いが起きたとき、どうやって仲直りする？", guide: "自分から謝れるか、お菓子を差し出して無言で仲直りを図るか、泣いてしまうか" },
+        { id: "q8_15", title: "『好き』や『愛してる』という言葉を素直に口にできる？", guide: "恥ずかしすぎて絶対言えない、耳元でなら小さく囁ける、何度も言葉にして伝えたい" },
+        { id: "q8_16", title: "恋人の匂いや温もりに包まれているとき、どんな感覚になる？", guide: "安心感で眠くなる、胸が締め付けられるほど愛おしい、もっと触れていたくなる" },
+        { id: "q8_17", title: "将来の約束や結婚、生涯を共にすることに対する憧れや本音は？", guide: "ずっと一緒にいたいという独占欲、自分にはもったいないという臆病さ" },
+        { id: "q8_18", title: "愛する人に対する最終的な献身・執着の深さはどれくらい？", guide: "その人のためなら命や名誉を捨てられるか、一生離さないという執念" }
+      ],
+
+      /* 9. 夜の性向・急所 (20問) */
+      "ch09": [
+        { id: "q9_1", title: "身体の最も感じやすい性感帯・急所トップ3はどこ？", guide: "耳元、うなじ、腰のくびれ、太もも内側、胸、手のひら、尻尾の付け根" },
+        { id: "q9_2", title: "性的な事柄に対する耐性や羞恥心の強さは？", guide: "話題に出るだけで顔から火が出る、無自覚に無防備、実は知識豊富でむっつり" },
+        { id: "q9_3", title: "寝室での主導権（攻め／受け）の傾向と本音は？", guide: "強引に支配され啼かされたい、優しく主導権を握って相手を翻弄したい" },
+        { id: "q9_4", title: "肌を触れ合わされた時の声や吐息、身体の反応は？", guide: "声を押し殺そうと唇を噛む、嬌声が漏れる、ビクビクと身体が跳ねて震える" },
+        { id: "q9_5", title: "服を脱がされる瞬間の羞恥心や抵抗の仕方は？", guide: "手で隠そうとする、顔を背けて赤面する、されるがままに力を抜く" },
+        { id: "q9_6", title: "相手にされて一番ゾクゾクする責め方・愛撫は？", guide: "耳元への熱い囁き、首筋への甘噛み、下腹部を焦らすような撫で回し、指先へのキス" },
+        { id: "q9_7", title: "キスに対するこだわりや、深いキスをされたときの変化は？", guide: "舌を絡められると腰が砕ける、息が苦しくなるほど求められるのが好き、奪うような激しいキス" },
+        { id: "q9_8", title: "言葉責めや『褒め殺し（可愛い、愛おしい）』への耐性は？", guide: "恥ずかしさで狂いそうになる、快感が倍増する、もっと言ってと懇願してしまう" },
+        { id: "q9_9", title: "密かな性癖やフェチ（拘束・目隠し・シチュエーション等）は？", guide: "手首を拘束されるスリル、視界を奪われる恐怖と快感、匂いフェチ、野外の緊張感" },
+        { id: "q9_10", title: "自分からおねだりしたり、誘惑することはできる？", guide: "プライドが邪魔して言えないが目線で誘う、服を引っ張る、大胆におねだりする" },
+        { id: "q9_11", title: "理性が完全に吹き飛んでしまうスイッチや合言葉は？", guide: "名前を耳元で甘く呼ばれる、急所を執拗に攻められる、力強く抱きすくめられる" },
+        { id: "q9_12", title: "普段のプライドや強がりが、快楽でメキメキと崩れ落ちる感覚は？", guide: "『もう無理…』と屈服する瞬間、プライドを脱ぎ捨てて快楽に縋る快感" },
+        { id: "q9_13", title: "身体の火照り・体温の上昇や汗、肌の赤らみはどう現れる？", guide: "全身が桜色に染まる、息が熱くなる、胸元やうなじに汗が滲む" },
+        { id: "q9_14", title: "事後の余韻の過ごし方とピロートークはどんな感じ？", guide: "照れ隠しにすぐ背を向ける、腕枕で胸にしがみつく、ぼんやり余韻で脱力する" },
+        { id: "q9_15", title: "抱きしめ合ってそのまま眠りたい派？それとも一度綺麗にしたい派？", guide: "肌と肌を密着させて温もりを感じていたい、綺麗にしてから改めて抱きつきたい" },
+        { id: "q9_16", title: "翌朝の目覚め（朝チュン）の瞬間の反応や照れ具合は？", guide: "昨夜の記憶を思い出して布団を被る、相手の寝顔を見つめて赤面、朝から求めてしまう" },
+        { id: "q9_17", title: "相手の身体で『一番触りたい・愛撫したい・噛みつきたい場所』は？", guide: "首筋、引き締まった腹筋、柔らかな胸、広い背中、唇" },
+        { id: "q9_18", title: "キスマークや噛み跡を付けられること・付けることへの執着は？", guide: "自分だけの印をつけたい独占欲、隠れた場所に刻まれて意識してしまう背徳感" },
+        { id: "q9_19", title: "お風呂場や机の上など、寝室以外の場所での行為への興味は？", guide: "いつもと違うシチュエーションの刺激、見つかるかもしれない背徳のスリル" },
+        { id: "q9_20", title: "自分でも驚くような『淫らな一面』や誰にも言えない秘密の欲望は？", guide: "普段の潔癖さからは想像もつかないほど啼かされたい、相手を狂わせるほど貪りたい" }
+      ],
+
+      "ch10": [
+        { id: "q10_1", title: "敵に捕らえられ尋問を受けたとき、最後まで口を割らない？", guide: "精神的・肉体的拷問への耐性、自白の境界線" },
+        { id: "q10_2", title: "大切な人が目の前で人質に取られたらどう動く？", guide: "冷静に隙を窺うか、激情に駆られて突撃するか" },
+        { id: "q10_3", title: "もし記憶を全て失ってしまったら、何を頼りに自分を取り戻す？", guide: "身体が覚えている癖、肌身離さず持っている遺品" },
+        { id: "q10_4", title: "もし全く別の平和な世界に生まれていたら何をしていた？", guide: "一般人としての素朴な夢、高校生、職人" },
+        { id: "q10_5", title: "自分が『怪物』や『裏切り者』に堕ちる悪夢を見ることはある？", guide: "心の闇、恐れている未来の可能性" },
+        { id: "q10_6", title: "世界の滅亡と愛する一人の命、どちらを救う選択をする？", guide: "究極の二者択一、エゴと大義" },
+        { id: "q10_7", title: "自分の余命があと一週間だと知ったら何をする？", guide: "いつも通りの日常、愛の告白、やり残した復讐" },
+        { id: "q10_8", title: "あなたにとって、このインタビューの相手（観察者）はどう見えている？", guide: "安心できる相手、警戒すべき侵入者、興味深い存在" }
+      ]
+    };
+
+    /* デフォルトで豊富に揃えた衣装プリセット */
+    const DEFAULT_OUTFITS = [
+      { id: "casual", name: "私服 (普段着)" },
+      { id: "battle", name: "戦闘服 / 制服" },
+      { id: "room", name: "部屋着 / パジャマ" },
+      { id: "swim", name: "水着 / バカンス" },
+      { id: "inner", name: "下着 / インナー" },
+      { id: "formal", name: "正装 / ドレス・スーツ" },
+      { id: "season", name: "季節服 (夏・冬)" },
+      { id: "special", name: "特殊・崩し着" }
+    ];
+
+    /* 表ステータス（日常・冒険 6軸） */
+    const RADAR_AXES_FRONT = [
+      { key: "battle", label: "戦闘力", name: "戦闘能力 / フィジカル", desc: "筋力、俊敏性、実戦攻撃力" },
+      { key: "intellect", label: "知性", name: "知性 / 観察眼", desc: "戦術眼、洞察力、分析力" },
+      { key: "mental", label: "精神力", name: "精神力 / 胆力", desc: "メンタルの強さ、不屈の意志" },
+      { key: "social", label: "社交性", name: "社交性 / コミュ力", desc: "人当たりの良さ、カリスマ" },
+      { key: "lifestyle", label: "生活力", name: "生活力 / 家事能力", desc: "料理、掃除、野営、サバイバル" },
+      { key: "technique", label: "器用さ", name: "器用さ / 技術", desc: "手先の器用さ、細工、武器手入れ" }
+    ];
+
+    /* 裏ステータス（恋愛・夜 6軸） */
+    const RADAR_AXES_BACK = [
+      { key: "honesty", label: "素直さ", name: "素直さ / デレ度", desc: "感情の出しやすさ、甘えやすさ" },
+      { key: "jealousy", label: "独占欲", name: "独占欲 / 執着心", desc: "嫉妬深さ、束縛欲、重さ" },
+      { key: "shame", label: "羞恥心", name: "羞恥心 / 潔癖度", desc: "照れやすさ、プライド、恥じらい" },
+      { key: "pleasure", label: "快楽感度", name: "快楽感度 / 屈服度", desc: "急所の弱さ、快楽耐性の脆さ" },
+      { key: "devotion", label: "奉仕欲", name: "奉仕欲 / 献身度", desc: "相手を喜ばせたい尽くし度" },
+      { key: "dominance", label: "支配/被虐", name: "支配欲 / 被虐性", desc: "攻め(支配)／受け(啼かされ)" }
+    ];
+
+    /* 5大シチュエーション取扱説明書 定義 */
+    const GUIDE_PRESETS = [
+      { id: "daily", icon: "☀️", title: "日常・普段の接し方", tag: "機嫌の取り方・距離感・地雷" },
+      { id: "battle", icon: "⚔️", title: "戦闘・共闘時の連携", tag: "背中の預け方・指示・ピンチの支え方" },
+      { id: "jealousy", icon: "💢", title: "嫉妬・怒らせた時の対処法", tag: "不機嫌サイン・ヤキモチの宥め方" },
+      { id: "dere", icon: "🌸", title: "甘えさせ方・デレの引き出し方", tag: "好意のサイン・弱み・スキンシップ" },
+      { id: "nsfw", icon: "🌙", title: "夜・NSFW攻略法", tag: "急所・攻め方・理性の崩し方・屈服" }
+    ];
+
+    /* 総合タイプ診断（全21種以上の性格属性クラス） */
+    const PERSONALITY_TYPES = [
+      {
+        id: "tsundere_wolf",
+        icon: "🐺",
+        name: "孤高のツンデレ狼",
+        sub: "武闘派・羞恥心特化・不器用",
+        desc: "普段は鋭い眼光で周囲を威嚇するが、心を許した相手には不器用に世話を焼く。急所を撫でられるとプライドが崩れ去る。",
+        check: (f, b) => f.battle >= 70 && b.shame >= 75 && b.honesty <= 45
+      },
+      {
+        id: "fallen_knight",
+        icon: "🛡️",
+        name: "気高き女騎士・陥落メス堕ち型",
+        sub: "高潔・強プライド・快楽脆弱",
+        desc: "「くっ殺せ！」の精神を持つが、身体の弱点を執拗に愛撫されると一瞬で理性が焼き切れ、抗えない快楽に屈服してしまう。",
+        check: (f, b) => f.battle >= 65 && b.shame >= 70 && b.pleasure >= 70
+      },
+      {
+        id: "loyal_hound",
+        icon: "🐕",
+        name: "献身の忠犬・武闘派ガード",
+        sub: "寡黙・無言の忠義・ボディーガード",
+        desc: "言葉より行動で示す不器用な忠誠心。背中を完全に預けられる無二の相棒だが、頭を撫でられると静かに目を細めて喜ぶ。",
+        check: (f, b) => f.battle >= 65 && f.mental >= 65 && b.devotion >= 65 && f.social <= 50
+      },
+      {
+        id: "battle_maniac",
+        icon: "💥",
+        name: "好戦的バトルジャンキー",
+        sub: "戦闘狂・野生児・色恋鈍感",
+        desc: "強敵との命のやり取りに何よりの興奮を覚える野生児。肌の露出や色恋沙汰には鈍感だが、実力でねじ伏せられると興味を持つ。",
+        check: (f, b) => f.battle >= 85 && f.mental >= 75 && f.lifestyle <= 40
+      },
+      {
+        id: "coo_dere_brain",
+        icon: "🧠",
+        name: "深奥のクーデレ参謀",
+        sub: "冷静沈着・観察眼・独占計算",
+        desc: "無表情で淡々と合理的な判断を下すが、内心では相手の動向を観察し、自分だけに依存させる好機を虎視眈々と狙っている。",
+        check: (f, b) => f.intellect >= 80 && b.jealousy >= 60 && f.social <= 50
+      },
+      {
+        id: "lazy_genius",
+        icon: "☕",
+        name: "気だるげな天才・ズボラ魔術師",
+        sub: "頭脳明晰・生活破綻・全依存",
+        desc: "学問や魔法の才は神がかっているが、私生活は壊滅的。身の回りの世話をすべて相手に任せきりにし、甘え腐っている。",
+        check: (f, b) => f.intellect >= 80 && f.technique >= 70 && f.lifestyle <= 35
+      },
+      {
+        id: "yandere_heavy",
+        icon: "⛓️",
+        name: "狂乱の重愛ヤンデレ",
+        sub: "超独占欲・束縛・世界の敵",
+        desc: "愛が重すぎるあまり、他の誰かに視線を向けただけで不穏な空気が立ち込める。自分だけの部屋に閉じ込めてしまいたい欲求を持つ。",
+        check: (f, b) => b.jealousy >= 85 && (b.dominance >= 65 || f.mental <= 40)
+      },
+      {
+        id: "dependent_menhera",
+        icon: "🥺",
+        name: "尽くしすぎ共依存メンヘラ",
+        sub: "自己犠牲・見捨てられ恐怖・献身",
+        desc: "「私にはあなたしかいない」と縋りつく。相手に見捨てられないためなら、どんな無理な要求や夜の責め苦も泣きながら受け入れる。",
+        check: (f, b) => b.devotion >= 80 && b.jealousy >= 65 && f.mental <= 45
+      },
+      {
+        id: "dominating_queen",
+        icon: "👑",
+        name: "監禁調教の女王様",
+        sub: "絶対支配・サディズム・首輪",
+        desc: "相手を自分だけの首輪で繋ぎ止め、弱音や啼き声をあげさせることに愉悦を覚える。頭脳明晰で逃げ場を塞ぐのが得意。",
+        check: (f, b) => f.intellect >= 70 && b.dominance >= 75 && b.shame <= 50
+      },
+      {
+        id: "sweet_big_dog",
+        icon: "🐾",
+        name: "人懐っこい大型犬・あまあま忠犬",
+        sub: "天真爛漫・全力甘え・無邪気",
+        desc: "屈託のない笑顔で愛情をストレートにぶつけてくる。抱きつかれると力加減を忘れて押し倒されるが、悪気は一切ない。",
+        check: (f, b) => b.honesty >= 75 && f.social >= 65 && b.devotion >= 65
+      },
+      {
+        id: "mischievous_imp",
+        icon: "😈",
+        name: "小悪魔メスガキ・からかい上手",
+        sub: "煽り・挑発・本気で赤面自爆",
+        desc: "「ざぁ〜こ♡」と生意気にからかって優位に立とうとするが、本気で迫られたり弱点を突かれると一瞬で涙目パニックに陥る。",
+        check: (f, b) => f.social >= 65 && f.intellect >= 60 && b.honesty <= 45 && b.dominance >= 60
+      },
+      {
+        id: "pure_innocent",
+        icon: "🍼",
+        name: "純真無垢な箱入り天然娘",
+        sub: "警戒心ゼロ・無自覚誘惑・ピュア",
+        desc: "悪気なく無防備な格好や密着スキンシップをしてきて、相手の理性を全力で狂わせる。性知識に疎く、すべてを素直に受け止める。",
+        check: (f, b) => b.shame <= 35 && b.honesty >= 70 && f.social >= 55
+      },
+      {
+        id: "holy_mother",
+        icon: "🤱",
+        name: "聖母マリア・甘やかしママみ",
+        sub: "全肯定・包容力カンスト・癒し",
+        desc: "弱った相手を膝枕で優しく包み込み、全肯定でどこまでもダメ人間に甘やかしてくれる。料理・家事・夜の包容力すべてが完璧。",
+        check: (f, b) => f.lifestyle >= 75 && b.devotion >= 75 && f.mental >= 65
+      },
+      {
+        id: "alluring_sister",
+        icon: "💋",
+        name: "妖艶な蠱惑者・オトナのお姉さん",
+        sub: "翻弄・熟練の色香・主導権掌握",
+        desc: "相手を手のひらで転がして楽しむ。耳元への熱い囁き一つで骨抜きにし、昼も夜も優しくリードして相手を虜にする。",
+        check: (f, b) => f.social >= 75 && b.pleasure >= 65 && b.shame <= 45 && f.technique >= 65
+      },
+      {
+        id: "cool_masochist",
+        icon: "❄️",
+        name: "冷徹な処刑人・隠れドM",
+        sub: "鉄壁の仮面・被虐快感・主従逆転",
+        desc: "表向きは冷酷無比な氷の刃だが、寝室では支配され、乱暴に啼かされ、命令されることに至上の快感を覚える重度のマゾヒスト。",
+        check: (f, b) => f.mental >= 75 && b.dominance <= 30 && b.pleasure >= 70
+      },
+      {
+        id: "closet_eromaniac",
+        icon: "📖",
+        name: "むっつりスケベ・限界妄想型",
+        sub: "清純フェイス・脳内ピンク・即濡れ",
+        desc: "清純で真面目そうに見えて、頭の中は相手との淫らなシチュエーションで24時間パンク寸前。ちょっと触れられただけで全身が火照る。",
+        check: (f, b) => b.shame >= 80 && b.pleasure >= 75 && f.intellect >= 65
+      },
+      {
+        id: "perfect_superhuman",
+        icon: "✨",
+        name: "完全無欠のパーフェクト超人",
+        sub: "文武両道・全能・唯一の隙",
+        desc: "戦闘・知性・家事・器用さすべてが非の打ち所がない万能選手。完璧すぎて周囲が恐縮するため、二人きりの時だけ弱音を吐きたがる。",
+        check: (f, b) => f.battle >= 75 && f.intellect >= 75 && f.lifestyle >= 75 && f.mental >= 70
+      },
+      {
+        id: "fragile_flower",
+        icon: "🪶",
+        name: "薄幸の薄命花・庇護欲特化型",
+        sub: "儚い・健気・守りたい命",
+        desc: "風が吹けば消え入りそうな儚い美しさ。身体は弱いが健気に尽くそうとするため、誰もが「命に代えても守らねば」と使命感を抱く。",
+        check: (f, b) => f.battle <= 35 && f.mental <= 40 && b.shame >= 70 && b.devotion >= 65
+      },
+      {
+        id: "needy_freeloader",
+        icon: "🫠",
+        name: "生活破綻・魔性のダメっ子",
+        sub: "生活力皆無・甘えの天才・ヒモ属性",
+        desc: "戦闘も家事も何もできないが、抱きついてすり寄る甘えの技術が神がかっており、周囲が喜んで世話を焼いてしまう天性のヒモ。",
+        check: (f, b) => f.lifestyle <= 30 && f.battle <= 35 && b.honesty >= 75
+      },
+      {
+        id: "absolute_sadist",
+        icon: "🔥",
+        name: "孤高のサディスト・完全支配型",
+        sub: "冷酷支配・踏みつけ・啼かせ悦び",
+        desc: "相手を屈服させ、跪かせ、恥ずかしい声をあげさせることに無上の快感を覚える生粋のサディスト。自らは絶対に隙を見せない。",
+        check: (f, b) => f.battle >= 75 && b.dominance >= 80 && b.pleasure <= 45
+      },
+      {
+        id: "solid_balancer",
+        icon: "⚖️",
+        name: "堅実なバランサー・常識人",
+        sub: "安定感・ブレーキ役・良心",
+        desc: "極端な偏りがなく、あらゆる状況に臨機応変に対応できる貴重な常識人。癖の強い周囲に振り回されつつも頼りにされている。",
+        check: (f, b) => true // デフォルトフォールバック
+      }
+    ];
+
+    /* シチュエーションボイス定義 (案8) */
+    const VOICE_PRESETS = [
+      { id: "greeting", label: "🌅 朝の挨拶・起床", defaultStage: "朝日が差し込む部屋で、眠たそうに目を擦りながら", defaultQuote: "…ん、まだ寝てたいのに。…おはよう、お前。" },
+      { id: "daily", label: "☕ 日常の雑談・声掛け", defaultStage: "マグカップを両手で持ち、少し居心地悪そうに視線を泳がせる", defaultQuote: "暇なら…少し話でもしないか？別にお前の声が聞きたかったわけじゃないけど。" },
+      { id: "battle", label: "⚔️ 戦闘開始・気迫", defaultStage: "得物を構え、野生的な鋭い視線で敵を射抜く", defaultQuote: "私の間合いに踏み込んだこと、後悔させてあげる！" },
+      { id: "pinch", label: "🩸 ピンチ・負傷・弱音", defaultStage: "膝をつき、荒い息を吐きながらも睨みつける", defaultQuote: "くっ…まだよ…！この程度で、屈するわけにいかない…！" },
+      { id: "victory", label: "✨ 勝利・安堵", defaultStage: "息を整え、ほっと安堵の息を吐きながら小さく微笑む", defaultQuote: "ふぅ…なんとか片付いたわね。アンタ、怪我はない？" },
+      { id: "dere", label: "🌸 照れ・デレ・甘え", defaultStage: "耳と尻尾を微かに震わせ、顔を背けながら服の裾をぎゅっと握る", defaultQuote: "別に…待ってたわけじゃないんだから。…でも、側から離れたら怒るから。" },
+      { id: "night", label: "🌙 夜の囁き・急所・喘ぎ", defaultStage: "首筋に触れられ、熱い吐息とともに嬌声が漏れる", defaultQuote: "んぁっ…やめ、そこ…敏感だから…っ、お願い、優しくして…！" },
+      { id: "farewell", label: "🌌 別れ際・おやすみ", defaultStage: "名残惜しそうに振り返り、小さく手を振る", defaultQuote: "明日も…ちゃんと会いに来てよね。約束破ったら噛みつくから。" }
+    ];
+
+    /* ==========================================================
+       状態管理
+       ========================================================== */
+    const STORAGE_KEY = "char_interview_note_data_v8";
+
+    let appData = {
+      activeCharId: "char_default",
+      activeGenreId: "ch01",
+      relationships: {},
+      crossTalkLogs: {},
+      chapters: GENRE_DEFINITIONS.map(g => ({
+        id: g.id,
+        title: g.title,
+        color: g.color,
+        desc: g.desc,
+        questions: DEFAULT_QUESTIONS_MAP[g.id] || []
+      })),
+      characters: {
+        "char_default": {
+          id: "char_default",
+          name: "セレスティア",
+          alias: "黄昏の銀狼",
+          gender: "female",
+          age: "19歳",
+          race: "人狼の血を引く亜人",
+          job: "辺境調査員",
+          position: "strong_uke",
+          cv: "澄んだ冷たさと微かな甘さを帯びたアルトボイス",
+          body: "首筋とうなじ、狼耳の付け根が極めて敏感",
+          themeColor: "#f59e0b",
+          isLocked: true,
+          currentOutfit: "casual",
+          outfits: JSON.parse(JSON.stringify(DEFAULT_OUTFITS)),
+          radar: {
+            // 表ステータス
+            battle: 85,
+            intellect: 80,
+            mental: 75,
+            social: 25,
+            lifestyle: 65,
+            technique: 70,
+            // 裏ステータス
+            honesty: 30,
+            jealousy: 65,
+            shame: 90,
+            pleasure: 75,
+            devotion: 60,
+            dominance: 35
+          },
+          guides: {
+            daily: "基本は放し飼い推奨。無理に詮索せず、温かい食事やお茶を差し出すと静かに喜ぶ。⚠️地雷: 人前で頭を撫でたり、不意に尻尾に触れると威嚇される。",
+            battle: "前衛で曲刀による俊敏な切り込みを担当。背中を預けると抜群の連携を見せる。ピンチ時は無理に庇おうとせず『頼む、力を貸してくれ』と対等に頼むと限界を超えて奮起する。",
+            jealousy: "あからさまに不機嫌になり、背を向けて押し黙る。無理に言い訳せず、お気に入りのお菓子を差し出しつつ『お前が一番大切だ』と言葉で伝えると、赤面しながら許してくれる。",
+            dere: "自分から甘えてくることはないが、二人きりで無言で服の裾を掴んできたり、隣に座って肩を預けてきたらデレのサイン。からかわずに黙って頭や耳の付け根を撫でてあげること。",
+            nsfw: "プライドが高いため序盤は強がるが、首筋への甘噛みとうなじへの熱い吐息で即座に腰が砕ける。耳元で『可愛い』と褒め殺しながら急所を責めると、羞恥心で理性が焼き切れてメス堕ちする。"
+          },
+          voiceLines: {
+            greeting: { stage: "朝日が差し込む部屋で、眠たそうに目を擦りながら", quote: "…ん、まだ寝てたいのに。…おはよう、お前。", note: "寝起きは無防備" },
+            daily: { stage: "マグカップを両手で持ち、少し居心地悪そうに視線を泳がせる", quote: "暇なら…少し話でもしないか？別にお前の声が聞きたかったわけじゃないけど。", note: "寂しがり屋" },
+            battle: { stage: "得物を構え、野生的な鋭い視線で敵を射抜く", quote: "私の間合いに踏み込んだこと、後悔させてあげる！", note: "戦闘中は好戦的" },
+            pinch: { stage: "膝をつき、荒い息を吐きながらも睨みつける", quote: "くっ…まだよ…！この程度で、屈するわけにいかない…！", note: "決して屈服しない意地" },
+            victory: { stage: "息を整え、ほっと安堵の息を吐きながら小さく微笑む", quote: "ふぅ…なんとか片付いたわね。アンタ、怪我はない？", note: "まず相手を心配する" },
+            dere: { stage: "耳と尻尾を微かに震わせ、顔を背けながら服の裾をぎゅっと握る", quote: "別に…待ってたわけじゃないんだから。…でも、側から離れたら怒るから。", note: "素直になれない甘え" },
+            night: { stage: "首筋に触れられ、熱い吐息とともに嬌声が漏れる", quote: "んぁっ…やめ、そこ…敏感だから…っ、お願い、優しくして…！", note: "急所に弱い" },
+            farewell: { stage: "名残惜しそうに振り返り、小さく手を振る", quote: "明日も…ちゃんと会いに来てよね。約束破ったら噛みつくから。", note: "名残惜しい本音" }
+          },
+          sheet: {
+            birth: "10月24日 / 蠍座 / A型",
+            family: "天涯孤独 / ギルドの一室",
+            body_size: "162cm / 48kg / しなやかな筋肉質",
+            three_size: "B84(C) W58 H86 / 色白",
+            hair_eye: "銀髪ショート、黄金色の瞳",
+            feature: "右利き / 暗視可能、犬歯が鋭い",
+            scars: "左太ももに過去の獣の爪痕",
+            smell: "夜の森と野薔薇のほのかな香り",
+            prono: "私 / アンタ、お前",
+            tone: "ぶっきらぼう、命令口調だが語尾が柔らかい",
+            personality: "寡黙で警戒心が強いが、心を開くと世話焼きで甘え下手",
+            merit: "嘘をつかない、義理堅い、約束を守る",
+            demerit: "褒められるとパニック、見捨てられる恐怖",
+            likes: "焼きたての肉、静かな月夜",
+            dislikes: "人混み、不意に尻尾を触られること",
+            hobby: "武器の手入れ、森で昼寝",
+            luxury: "酒に弱い(飲むと甘え上戸に)、木苺が好き",
+            battle: "銀の曲刀を用いた俊敏な連撃 / 銀の拘束具が弱点",
+            love_type: "嘘をつかない誠実で強い人",
+            fetish: "首輪、耳元への囁き、甘やかし",
+            shame: "羞恥心強めだが、感じるとすぐに啼いて屈服"
+          },
+          traits: [
+            { key: "主人公との関係", val: "命を救われて以来、密かに全幅の信頼を寄せている" }
+          ],
+          answers: {
+            "q1_2": {
+              patterns: [
+                {
+                  stage: "少し視線を逸らし、耳をぴくりと動かしながら小さく咳払いをする",
+                  quote: "……一人称は『私』だ。アンタのことは……まあ、『アンタ』か、名前で呼べばいいのか？ 他人と無駄口を叩くのは慣れてないんだ。",
+                  mind: "初対面相手にはわざと冷たくして距離を置こうとしているが、内心では相手が怖がっていないか気にしている。",
+                  note: "警戒心が解けると、語尾が少し柔らかくなり、問いかけるような話し方に変わる。"
+                }
+              ],
+              activeIdx: 0
+            }
+          }
+        }
+      }
+    };
+
+    let isViewMode = false;
+    let centerTabMode = 'sheet'; // 'sheet', 'radar', 'voice'
+    let questionFilterMode = 'all'; // 'all', 'unanswered', 'answered'
+    let questionSearchQuery = '';
+
+    function loadData() {
+      // 過去バージョンからの引き継ぎもサポート
+      const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("char_interview_note_data_v7");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.characters) {
+            appData = parsed;
+          }
+        } catch(e) {
+          console.error("Failed to parse saved data:", e);
+        }
+      }
+
+      // 新プロパティの安全補完
+      if (!appData.relationships) appData.relationships = {};
+      if (!appData.crossTalkLogs) appData.crossTalkLogs = {};
+      Object.values(appData.characters).forEach(c => {
+        if (!c.radar) c.radar = {};
+        // 表ステータス
+        if (c.radar.battle === undefined) c.radar.battle = 75;
+        if (c.radar.intellect === undefined) c.radar.intellect = 80;
+        if (c.radar.mental === undefined) c.radar.mental = 75;
+        if (c.radar.social === undefined) c.radar.social = 30;
+        if (c.radar.lifestyle === undefined) c.radar.lifestyle = 65;
+        if (c.radar.technique === undefined) c.radar.technique = 70;
+        // 裏ステータス
+        if (c.radar.honesty === undefined) c.radar.honesty = 30;
+        if (c.radar.jealousy === undefined) c.radar.jealousy = 65;
+        if (c.radar.shame === undefined) c.radar.shame = 90;
+        if (c.radar.pleasure === undefined) c.radar.pleasure = 75;
+        if (c.radar.devotion === undefined) c.radar.devotion = 60;
+        if (c.radar.dominance === undefined) c.radar.dominance = 35;
+
+        if (!c.guides) c.guides = {};
+        GUIDE_PRESETS.forEach(gp => {
+          if (c.guides[gp.id] === undefined) {
+            c.guides[gp.id] = generateDefaultGuideText(c, gp.id);
+          }
+        });
+
+        if (!c.voiceLines) {
+          c.voiceLines = {};
+          VOICE_PRESETS.forEach(v => {
+            c.voiceLines[v.id] = { stage: v.defaultStage, quote: v.defaultQuote, note: "" };
+          });
+        }
+      });
+
+      // 最新質問マスターのマージ（初期プリセット＋ユーザーの追加質問）
+      appData.chapters = GENRE_DEFINITIONS.map(g => {
+        const defaultList = DEFAULT_QUESTIONS_MAP[g.id] || [];
+        let customQs = [];
+        if (appData.chapters) {
+          const oldCh = appData.chapters.find(c => c.id === g.id);
+          if (oldCh && oldCh.questions) {
+            customQs = oldCh.questions.filter(q => q.id.startsWith("q_custom_"));
+          }
+        }
+        return {
+          id: g.id,
+          title: g.title,
+          color: g.color,
+          desc: g.desc,
+          questions: [...defaultList, ...customQs]
+        };
+      });
+
+      if (!appData.activeGenreId) appData.activeGenreId = "ch01";
+      if (!appData.characters[appData.activeCharId]) {
+        appData.activeCharId = Object.keys(appData.characters)[0] || "char_default";
+      }
+
+      Object.values(appData.characters).forEach(c => {
+        if (!c.themeColor) c.themeColor = "#f59e0b";
+        if (c.isLocked === undefined) c.isLocked = false;
+        
+        // 衣装リストを素で多数のプリセットに拡張
+        if (!c.outfits || c.outfits.length <= 4) {
+          const existingIds = new Set((c.outfits || []).map(o => o.id));
+          const merged = [...(c.outfits || [])];
+          DEFAULT_OUTFITS.forEach(d => {
+            if (!existingIds.has(d.id)) merged.push(d);
+          });
+          c.outfits = merged;
+        }
+        if (!c.currentOutfit) c.currentOutfit = c.outfits[0].id;
+        if (!c.sheet) c.sheet = {};
+        if (!c.traits) c.traits = [];
+        if (!c.answers) c.answers = {};
+      });
+
+      applyThemeColor(getActiveChar().themeColor);
+      saveData();
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+    }
+
+    function getActiveChar() {
+      return appData.characters[appData.activeCharId];
+    }
+
+    function getActiveGenre() {
+      return appData.chapters.find(c => c.id === appData.activeGenreId) || appData.chapters[0];
+    }
+
+    /* ==========================================================
+       テーマカラー
+       ========================================================== */
+    function setCustomThemeColor(hex) {
+      const c = getActiveChar();
+      c.themeColor = hex;
+      applyThemeColor(hex);
+      saveData();
+      showToast(`テーマ色を ${hex} に変更しました`);
+    }
+
+    function applyThemeColor(hex) {
+      if (!hex) hex = "#f59e0b";
+      document.documentElement.style.setProperty('--theme-accent', hex);
+      const r = parseInt(hex.slice(1, 3), 16) || 245;
+      const g = parseInt(hex.slice(3, 5), 16) || 158;
+      const b = parseInt(hex.slice(5, 7), 16) || 11;
+      document.documentElement.style.setProperty('--theme-glow', `rgba(${r}, ${g}, ${b}, 0.25)`);
+      document.documentElement.style.setProperty('--theme-soft', `rgba(${r}, ${g}, ${b}, 0.12)`);
+      
+      const picker = document.getElementById("themeColorPicker");
+      if (picker) picker.value = hex;
+    }
+
+    function hexToRgba(hex, alpha) {
+      if (!hex || !hex.startsWith('#')) return `rgba(245, 158, 11, ${alpha})`;
+      let c = hex.substring(1);
+      if (c.length === 3) {
+        c = c.split('').map(x => x + x).join('');
+      }
+      const num = parseInt(c, 16);
+      const r = (num >> 16) & 255;
+      const g = (num >> 8) & 255;
+      const b = num & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    /* ==========================================================
+       全体レンダリング
+       ========================================================== */
+    async function renderApp() {
+      renderCharShelf();
+      renderOutfitBar();
+      await updatePortraitDisplay();
+      renderCharControl();
+      renderCenterSheet();
+      renderTraits();
+      renderRadarSliders();
+      drawRadarChart();
+      renderGuideCards();
+      renderVoiceSection();
+      renderGenreNavBar();
+      await renderActiveGenreQuestions();
+    }
+
+    /* キャラクター保存棚 */
+    async function renderCharShelf() {
+      const shelf = document.getElementById("charShelfList");
+      shelf.innerHTML = "";
+      
+      for (const c of Object.values(appData.characters)) {
+        const item = document.createElement("div");
+        item.className = `shelf-item ${c.id === appData.activeCharId ? 'active' : ''}`;
+        item.onclick = () => switchCharacter(c.id);
+
+        let answeredCount = 0;
+        if (c.answers) {
+          Object.values(c.answers).forEach(a => {
+            if (a.patterns && a.patterns.some(p => (p.quote && p.quote.trim()) || (p.stage && p.stage.trim()))) {
+              answeredCount++;
+            }
+          });
+        }
+
+        const totalQ = getTotalQuestionsCount();
+        const curOutfit = c.currentOutfit || "casual";
+        let thumbSrc = await getImageFromDB(`img_${c.id}_${curOutfit}`);
+        if (!thumbSrc && c.outfits && c.outfits[0]) {
+          thumbSrc = await getImageFromDB(`img_${c.id}_${c.outfits[0].id}`);
+        }
+
+        item.innerHTML = `
+          <div class="shelf-avatar">
+            ${thumbSrc ? `<img src="${thumbSrc}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">` : `👤`}
+          </div>
+          <span class="shelf-name">${escapeHtml(c.name || '未設定')}</span>
+          ${c.isLocked ? `<span class="shelf-lock-icon" title="保護中">🔒</span>` : ''}
+          <span class="shelf-badge">${answeredCount}/${totalQ}</span>
+        `;
+        shelf.appendChild(item);
+      }
+    }
+
+    function getTotalQuestionsCount() {
+      let count = 0;
+      appData.chapters.forEach(ch => {
+        if (ch.questions) count += ch.questions.length;
+      });
+      return count;
+    }
+
+    /* 服装バー（素で多数の衣装タブを標準装備） */
+    function renderOutfitBar() {
+      const c = getActiveChar();
+      const bar = document.getElementById("outfitBar");
+      bar.innerHTML = "";
+
+      if (!c.outfits || c.outfits.length === 0) c.outfits = JSON.parse(JSON.stringify(DEFAULT_OUTFITS));
+      if (!c.currentOutfit) c.currentOutfit = c.outfits[0].id;
+
+      c.outfits.forEach(o => {
+        const btn = document.createElement("button");
+        btn.className = `outfit-tab ${o.id === c.currentOutfit ? 'active' : ''}`;
+        btn.textContent = o.name;
+        btn.onclick = () => switchOutfit(o.id);
+        bar.appendChild(btn);
+      });
+
+      const addBtn = document.createElement("button");
+      addBtn.className = "outfit-add-btn";
+      addBtn.textContent = "＋衣装";
+      addBtn.onclick = addNewOutfit;
+      bar.appendChild(addBtn);
+    }
+
+    function switchOutfit(outfitId) {
+      const c = getActiveChar();
+      c.currentOutfit = outfitId;
+      saveData();
+      renderOutfitBar();
+      updatePortraitDisplay();
+      renderActiveGenreQuestions();
+    }
+
+    function addNewOutfit() {
+      const name = prompt("追加する衣装・服装の名前 (例: メイド服, チャイナ服, 制服):");
+      if (!name || !name.trim()) return;
+      const c = getActiveChar();
+      const newId = "outfit_" + Date.now();
+      c.outfits.push({ id: newId, name: name.trim() });
+      c.currentOutfit = newId;
+      saveData();
+      renderOutfitBar();
+      updatePortraitDisplay();
+      showToast(`衣装「${name}」を追加しました`);
+    }
+
+    /* 立ち絵表示 */
+    async function updatePortraitDisplay() {
+      const c = getActiveChar();
+      const outfit = c.currentOutfit || "casual";
+      const imgEl = document.getElementById("portraitImg");
+      const phEl = document.getElementById("portraitPlaceholder");
+
+      const dbKey = `img_${c.id}_${outfit}`;
+      const src = await getImageFromDB(dbKey);
+
+      if (src) {
+        imgEl.src = src;
+        imgEl.style.display = "block";
+        phEl.style.display = "none";
+      } else {
+        imgEl.style.display = "none";
+        phEl.style.display = "flex";
+      }
+    }
+
+    /* 左カラム：名前・保護・削除 */
+    function renderCharControl() {
+      const c = getActiveChar();
+      document.body.setAttribute("data-gender", c.gender || "female");
+      document.getElementById("charNameInput").value = c.name || "";
+      document.getElementById("charGenderSelect").value = c.gender || "female";
+      applyThemeColor(c.themeColor);
+
+      const lockBtn = document.getElementById("charLockBtn");
+      const delBtn = document.getElementById("delCharBtn");
+      if (c.isLocked) {
+        lockBtn.className = "lock-btn locked";
+        lockBtn.textContent = "🔒 保護中 (削除不可)";
+        delBtn.disabled = true;
+        delBtn.title = "保護されているため削除できません";
+      } else {
+        lockBtn.className = "lock-btn unlocked";
+        lockBtn.textContent = "🔓 未保護 (削除可)";
+        delBtn.disabled = false;
+        delBtn.title = "キャラクターを削除";
+      }
+    }
+
+    function toggleCharLock() {
+      const c = getActiveChar();
+      c.isLocked = !c.isLocked;
+      saveData();
+      renderCharControl();
+      renderCharShelf();
+      showToast(c.isLocked ? "キャラクターを保護しました (誤削除防止)" : "保護を解除しました");
+    }
+
+    function deleteCurrentCharacter() {
+      const c = getActiveChar();
+      if (c.isLocked) {
+        alert("このキャラクターは保護されています。削除する前に保護を解除してください。");
+        return;
+      }
+      if (Object.keys(appData.characters).length <= 1) {
+        alert("最後の1体は削除できません。");
+        return;
+      }
+      if (!confirm(`本当にキャラクター「${c.name}」を削除しますか？\n入力された設定や回答データは元に戻せません。`)) {
+        return;
+      }
+
+      const delId = c.id;
+      delete appData.characters[delId];
+      appData.activeCharId = Object.keys(appData.characters)[0];
+      saveData();
+      renderApp();
+      showToast("キャラクターを削除しました");
+    }
+
+    /* 中央カラム：超詳細キャラカルテ */
+    function renderCenterSheet() {
+      const c = getActiveChar();
+      const s = c.sheet || {};
+
+      document.getElementById("cs_alias").value = c.alias || "";
+      document.getElementById("cs_age").value = c.age || "";
+      document.getElementById("cs_race").value = c.race || "";
+      document.getElementById("cs_job").value = c.job || "";
+      document.getElementById("cs_birth").value = s.birth || "";
+      document.getElementById("cs_family").value = s.family || "";
+
+      document.getElementById("cs_body_size").value = s.body_size || "";
+      document.getElementById("cs_three_size").value = s.three_size || "";
+      document.getElementById("cs_hair_eye").value = s.hair_eye || "";
+      document.getElementById("cs_feature").value = s.feature || "";
+      document.getElementById("cs_scars").value = s.scars || "";
+      document.getElementById("cs_smell").value = s.smell || "";
+
+      document.getElementById("cs_prono").value = s.prono || "";
+      document.getElementById("cs_tone").value = s.tone || "";
+      document.getElementById("cs_personality").value = s.personality || "";
+      document.getElementById("cs_merit").value = s.merit || "";
+      document.getElementById("cs_demerit").value = s.demerit || "";
+      document.getElementById("cs_cv").value = c.cv || "";
+
+      document.getElementById("cs_likes").value = s.likes || "";
+      document.getElementById("cs_dislikes").value = s.dislikes || "";
+      document.getElementById("cs_hobby").value = s.hobby || "";
+      document.getElementById("cs_luxury").value = s.luxury || "";
+      document.getElementById("cs_battle").value = s.battle || "";
+
+      document.getElementById("charPositionSelect").value = c.position || "none";
+      document.getElementById("cs_love_type").value = s.love_type || "";
+      document.getElementById("cs_body").value = c.body || "";
+      document.getElementById("cs_fetish").value = s.fetish || "";
+      document.getElementById("cs_shame").value = s.shame || "";
+    }
+
+    function updateProfile(field, val) {
+      const c = getActiveChar();
+      c[field] = val;
+      saveData();
+      if (field === "name") renderCharShelf();
+    }
+    function updateSheetField(field, val) {
+      const c = getActiveChar();
+      if (!c.sheet) c.sheet = {};
+      c.sheet[field] = val;
+      saveData();
+    }
+    function updateGender(val) {
+      const c = getActiveChar();
+      c.gender = val;
+      document.body.setAttribute("data-gender", val);
+      saveData();
+      showToast(`フォントを「${val === 'female' ? 'やわらか手書き' : val === 'male' ? '毛筆調手書き' : '明朝体'}」に設定`);
+    }
+
+    /* 中央カラム サブタブ切り替え */
+    function switchCenterTab(tab) {
+      centerTabMode = tab;
+      document.getElementById("centerSheetSection").style.display = tab === 'sheet' ? 'block' : 'none';
+      document.getElementById("centerRadarSection").style.display = tab === 'radar' ? 'block' : 'none';
+      document.getElementById("centerVoiceSection").style.display = tab === 'voice' ? 'block' : 'none';
+
+      document.getElementById("tabBtnSheet").className = `center-subtab-btn ${tab === 'sheet' ? 'active' : ''}`;
+      document.getElementById("tabBtnRadar").className = `center-subtab-btn ${tab === 'radar' ? 'active' : ''}`;
+      document.getElementById("tabBtnVoice").className = `center-subtab-btn ${tab === 'voice' ? 'active' : ''}`;
+
+      if (tab === 'radar') {
+        renderRadarSliders();
+        drawRadarChart();
+        renderGuideCards();
+      } else if (tab === 'voice') {
+        renderVoiceSection();
+      }
+    }
+
+    /* ==========================================================
+       表裏ダブル6軸レーダー ＆ 総合タイプ診断 ＆ 5大トリセツ
+       ========================================================== */
+    let currentRadarMode = 'front'; // 'front' | 'back'
+
+    function switchRadarMode(mode) {
+      currentRadarMode = mode;
+      document.getElementById("radarModeFrontBtn").className = `radar-mode-btn ${mode === 'front' ? 'active' : ''}`;
+      document.getElementById("radarModeBackBtn").className = `radar-mode-btn ${mode === 'back' ? 'active' : ''}`;
+      renderRadarSliders();
+      drawRadarChart();
+    }
+
+    /* スライダー一覧の描画 */
+    function renderRadarSliders() {
+      const container = document.getElementById("radarSlidersContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      const c = getActiveChar();
+      if (!c.radar) c.radar = {};
+
+      const axes = currentRadarMode === 'front' ? RADAR_AXES_FRONT : RADAR_AXES_BACK;
+
+      axes.forEach(ax => {
+        const val = c.radar[ax.key] !== undefined ? c.radar[ax.key] : 50;
+        const item = document.createElement("div");
+        item.className = "radar-slider-item";
+        item.innerHTML = `
+          <div class="radar-slider-header">
+            <span title="${escapeAttr(ax.desc)}">${escapeHtml(ax.name)}</span>
+            <span class="radar-slider-val" id="val_radar_${ax.key}">${val}</span>
+          </div>
+          <input type="range" class="radar-slider-input" id="range_radar_${ax.key}" min="0" max="100" value="${val}"
+            oninput="onRadarSliderChange('${ax.key}', this.value)">
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    /* レーダーチャートCanvas描画 */
+    function drawRadarChart() {
+      const canvas = document.getElementById("radarCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const c = getActiveChar();
+      if (!c.radar) c.radar = {};
+      const r = c.radar;
+
+      // 総合タイプ診断カードの更新
+      renderPersonalityCard(c);
+
+      const axes = currentRadarMode === 'front' ? RADAR_AXES_FRONT : RADAR_AXES_BACK;
+
+      // Canvas描画
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const maxRadius = 88;
+      const numAxes = axes.length;
+      const angleStep = (Math.PI * 2) / numAxes;
+
+      // 5段階同心グリッド線
+      for (let level = 1; level <= 5; level++) {
+        const radius = (maxRadius / 5) * level;
+        ctx.beginPath();
+        for (let i = 0; i < numAxes; i++) {
+          const angle = i * angleStep - Math.PI / 2;
+          const x = centerX + radius * Math.cos(angle);
+          const y = centerY + radius * Math.sin(angle);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = level === 5 ? "rgba(255, 255, 255, 0.25)" : "rgba(255, 255, 255, 0.08)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // 軸線とラベル
+      ctx.font = "bold 9px 'Zen Kaku Gothic New', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      for (let i = 0; i < numAxes; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        const x = centerX + maxRadius * Math.cos(angle);
+        const y = centerY + maxRadius * Math.sin(angle);
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+        ctx.stroke();
+
+        const labelDist = maxRadius + 22;
+        const lx = centerX + labelDist * Math.cos(angle);
+        const ly = centerY + labelDist * Math.sin(angle);
+        ctx.fillStyle = currentRadarMode === 'front' ? "#94a3b8" : "#f472b6";
+        ctx.fillText(axes[i].label, lx, ly);
+      }
+
+      // パラメータポリゴン
+      const accent = currentRadarMode === 'front' ? (c.themeColor || "#f59e0b") : "#ec4899";
+      ctx.beginPath();
+      for (let i = 0; i < numAxes; i++) {
+        const val = (r[axes[i].key] !== undefined ? r[axes[i].key] : 50) / 100;
+        const curR = maxRadius * Math.max(0.05, Math.min(1.0, val));
+        const angle = i * angleStep - Math.PI / 2;
+        const x = centerX + curR * Math.cos(angle);
+        const y = centerY + curR * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = hexToRgba(accent, 0.35);
+      ctx.fill();
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 各頂点のポイント
+      for (let i = 0; i < numAxes; i++) {
+        const val = (r[axes[i].key] !== undefined ? r[axes[i].key] : 50) / 100;
+        const curR = maxRadius * Math.max(0.05, Math.min(1.0, val));
+        const angle = i * angleStep - Math.PI / 2;
+        const x = centerX + curR * Math.cos(angle);
+        const y = centerY + curR * Math.sin(angle);
+
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+
+    function onRadarSliderChange(axisKey, val) {
+      const c = getActiveChar();
+      if (!c.radar) c.radar = {};
+      c.radar[axisKey] = parseInt(val, 10);
+      const valEl = document.getElementById(`val_radar_${axisKey}`);
+      if (valEl) valEl.textContent = val;
+      drawRadarChart();
+      saveData();
+    }
+
+    /* 総合タイプ診断（称号バッジ） */
+    function detectPersonalityType(c) {
+      const r = c.radar || {};
+      const f = {
+        battle: r.battle !== undefined ? r.battle : 75,
+        intellect: r.intellect !== undefined ? r.intellect : 80,
+        mental: r.mental !== undefined ? r.mental : 75,
+        social: r.social !== undefined ? r.social : 30,
+        lifestyle: r.lifestyle !== undefined ? r.lifestyle : 65,
+        technique: r.technique !== undefined ? r.technique : 70
+      };
+      const b = {
+        honesty: r.honesty !== undefined ? r.honesty : 30,
+        jealousy: r.jealousy !== undefined ? r.jealousy : 65,
+        shame: r.shame !== undefined ? r.shame : 90,
+        pleasure: r.pleasure !== undefined ? r.pleasure : 75,
+        devotion: r.devotion !== undefined ? r.devotion : 60,
+        dominance: r.dominance !== undefined ? r.dominance : 35
+      };
+
+      for (const type of PERSONALITY_TYPES) {
+        if (type.check(f, b)) {
+          return type;
+        }
+      }
+      return PERSONALITY_TYPES[PERSONALITY_TYPES.length - 1]; // バランサー
+    }
+
+    function renderPersonalityCard(c) {
+      const type = detectPersonalityType(c);
+      const iconEl = document.getElementById("radarTypeIcon");
+      const nameEl = document.getElementById("radarTypeName");
+      const subEl = document.getElementById("radarTypeSub");
+      const descEl = document.getElementById("radarTypeDesc");
+      if (iconEl) iconEl.textContent = type.icon;
+      if (nameEl) nameEl.textContent = type.name;
+      if (subEl) subEl.textContent = type.sub;
+      if (descEl) descEl.textContent = type.desc;
+    }
+
+    /* 5大シチュエーション取扱説明書 (公式トリセツ) */
+    function renderGuideCards() {
+      const container = document.getElementById("guideCardsContainer");
+      if (!container) return;
+      container.innerHTML = "";
+      const c = getActiveChar();
+      if (!c.guides) c.guides = {};
+
+      GUIDE_PRESETS.forEach(gp => {
+        const text = c.guides[gp.id] !== undefined ? c.guides[gp.id] : generateDefaultGuideText(c, gp.id);
+        const card = document.createElement("div");
+        card.className = "guide-card";
+        card.innerHTML = `
+          <div class="guide-card-head">
+            <div class="guide-card-title">
+              <span>${gp.icon}</span>
+              <span>${gp.title}</span>
+            </div>
+            <span class="guide-card-tag">${gp.tag}</span>
+          </div>
+          <textarea class="guide-textarea" placeholder="このシチュエーションでの接し方・地雷・攻略法を入力..."
+            oninput="updateGuideLine('${gp.id}', this.value)">${escapeHtml(text)}</textarea>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function updateGuideLine(id, val) {
+      const c = getActiveChar();
+      if (!c.guides) c.guides = {};
+      c.guides[id] = val;
+      saveData();
+    }
+
+    function autoGenerateAllGuides() {
+      const c = getActiveChar();
+      if (!c.guides) c.guides = {};
+      GUIDE_PRESETS.forEach(gp => {
+        c.guides[gp.id] = generateDefaultGuideText(c, gp.id);
+      });
+      saveData();
+      renderGuideCards();
+      showToast("ステータスから5大トリセツを自動作文しました！");
+    }
+
+    function generateDefaultGuideText(c, id) {
+      const r = c.radar || {};
+      const battle = r.battle || 75;
+      const intellect = r.intellect || 80;
+      const mental = r.mental || 75;
+      const social = r.social || 30;
+      const honesty = r.honesty || 30;
+      const jealousy = r.jealousy || 65;
+      const shame = r.shame || 90;
+      const pleasure = r.pleasure || 75;
+      const devotion = r.devotion || 60;
+      const dominance = r.dominance || 35;
+
+      if (id === 'daily') {
+        if (social < 40 && honesty < 45) {
+          return "基本は放し飼い推奨。無理に詮索せず、温かい食事やお茶を差し出すと静かに喜ぶ。⚠️地雷: 人前で頭を撫でたり、不意に身体の急所や尻尾に触れると威嚇される。";
+        } else if (social >= 70) {
+          return "人当たりが良く常に輪の中心にいるが、一人の時間も大切にする。二人きりの時はリラックスして素の柔らかい笑顔を見せてくれる。";
+        } else {
+          return "普段は真面目で几帳面。日課を崩されるのを嫌うため、生活リズムを尊重してあげると好感度が安定する。";
+        }
+      } else if (id === 'battle') {
+        if (battle >= 75) {
+          return "前衛で素早い連撃を担当。背中を預けると抜群の連携を見せる。ピンチ時は無理に庇おうとせず『頼む、力を貸してくれ』と対等に頼むと限界を超えて奮起する。";
+        } else if (intellect >= 75) {
+          return "後方からの戦況把握・戦術指示が的確。指示通りに動くことで最大の戦果をあげられる。不測の事態でも冷静に立て直してくれる。";
+        } else {
+          return "無理な突撃は避け、周囲と足並みを揃えて戦う堅実派。疲労が溜まったら無理をさせず早めに交代を促すこと。";
+        }
+      } else if (id === 'jealousy') {
+        if (jealousy >= 75) {
+          return "独占欲が非常に強い。他の異性と親しげに話すだけで不機嫌になり、背を向けて押し黙る。早めに二人きりになって『お前が一番大切だ』と抱きしめて安心させること。";
+        } else if (jealousy <= 40) {
+          return "嫉妬を表に出すことは滅多にないが、心の奥で小さく寂しがっている。さりげなく特別扱いしてあげると静かに安堵する。";
+        } else {
+          return "適度なヤキモチ焼き。あからさまな言い訳は嫌うため、美味しいお菓子やプレゼントを添えて素直に謝るとすぐに機嫌が直る。";
+        }
+      } else if (id === 'dere') {
+        if (honesty <= 40) {
+          return "自分から『甘えたい』とは絶対に言わないが、二人きりで無言で服の裾を掴んできたり、隣に座って肩を預けてきたらデレの合図。からかわずに黙って優しく受け止めること。";
+        } else {
+          return "素直に好意をぶつけてくる甘えん坊。頭を撫でたりハグをすると満面の笑顔になり、いつまでも身体を密着させて離れようとしない。";
+        }
+      } else if (id === 'nsfw') {
+        if (shame >= 70 && pleasure >= 70) {
+          return "プライドが高いため序盤は強がるが、首筋や耳元への甘噛みと熱い吐息で即座に腰が砕ける。耳元で『可愛い』と褒め殺しながら急所を責めると、羞恥心で理性が焼き切れてメス堕ちする。";
+        } else if (dominance >= 70) {
+          return "寝室では主導権を握りたい攻め気質。強引にリードされ翻弄されるが、急所を不意打ちされると一転して艶っぽい声を漏らす。";
+        } else {
+          return "優しく愛撫を重ねることで徐々に身体が解れ、普段は見せない甘い吐息と艶やかな表情で相手に縋りついてくる。";
+        }
+      }
+      return "特記事項なし";
+    }
+
+    /* シチュエーションボイス集 (案8) */
+    function renderVoiceSection() {
+      const container = document.getElementById("voiceGridContainer");
+      if (!container) return;
+      const c = getActiveChar();
+      if (!c.voiceLines) c.voiceLines = {};
+
+      container.innerHTML = "";
+
+      VOICE_PRESETS.forEach(preset => {
+        const line = c.voiceLines[preset.id] || { stage: preset.defaultStage, quote: preset.defaultQuote, note: "" };
+        const card = document.createElement("div");
+        card.className = "voice-card";
+
+        card.innerHTML = `
+          <div class="voice-card-head">
+            <span class="voice-tag">${preset.label}</span>
+            <span style="font-size:9px; color:var(--text-muted);">AIプロンプト即時連動</span>
+          </div>
+          <input type="text" class="voice-stage-input" placeholder="演出・仕草・ト書き (例: 眠そうに目を擦りながら...)"
+            value="${escapeAttr(line.stage || '')}"
+            oninput="updateVoiceLine('${preset.id}', 'stage', this.value)">
+          <textarea class="voice-quote-area" placeholder="「セリフを入力してください...」"
+            oninput="updateVoiceLine('${preset.id}', 'quote', this.value)">${escapeHtml(line.quote || '')}</textarea>
+          <input type="text" class="voice-note-input" placeholder="補足メモ (例: 照れ隠し、語尾が甘くなる...)"
+            value="${escapeAttr(line.note || '')}"
+            oninput="updateVoiceLine('${preset.id}', 'note', this.value)">
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function updateVoiceLine(vId, field, val) {
+      const c = getActiveChar();
+      if (!c.voiceLines) c.voiceLines = {};
+      if (!c.voiceLines[vId]) {
+        const preset = VOICE_PRESETS.find(p => p.id === vId) || { defaultStage: "", defaultQuote: "" };
+        c.voiceLines[vId] = { stage: preset.defaultStage, quote: preset.defaultQuote, note: "" };
+      }
+      c.voiceLines[vId][field] = val;
+      saveData();
+    }
+
+    /* 自由追加項目 */
+    function renderTraits() {
+      const c = getActiveChar();
+      const list = document.getElementById("traitList");
+      list.innerHTML = "";
+      if (!c.traits) c.traits = [];
+
+      c.traits.forEach((t, idx) => {
+        const item = document.createElement("div");
+        item.className = "trait-row";
+        item.innerHTML = `
+          <div class="trait-top">
+            <input type="text" class="trait-key-in" value="${escapeAttr(t.key)}" placeholder="項目名" oninput="updateTrait(${idx}, 'key', this.value)">
+            <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:11px;" onclick="deleteTrait(${idx})">✕</button>
+          </div>
+          <textarea class="trait-val-in" rows="2" placeholder="設定内容を入力..." oninput="updateTrait(${idx}, 'val', this.value)">${escapeHtml(t.val)}</textarea>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function addCustomTrait() {
+      const c = getActiveChar();
+      if (!c.traits) c.traits = [];
+      c.traits.push({ key: "新規設定", val: "" });
+      saveData();
+      renderTraits();
+    }
+    function updateTrait(idx, field, val) {
+      const c = getActiveChar();
+      if (c.traits && c.traits[idx]) {
+        c.traits[idx][field] = val;
+        saveData();
+      }
+    }
+    function deleteTrait(idx) {
+      const c = getActiveChar();
+      if (c.traits) {
+        c.traits.splice(idx, 1);
+        saveData();
+        renderTraits();
+      }
+    }
+
+    /* ==========================================================
+       右カラム：ジャンル別色分けインタビュー
+       ========================================================== */
+    function renderGenreNavBar() {
+      const bar = document.getElementById("genreNavBar");
+      bar.innerHTML = "";
+
+      appData.chapters.forEach((ch, idx) => {
+        const pill = document.createElement("div");
+        pill.className = `genre-pill ${ch.id === appData.activeGenreId ? 'active' : ''}`;
+        if (ch.id === appData.activeGenreId) {
+          pill.style.backgroundColor = ch.color;
+          pill.style.borderColor = ch.color;
+        }
+
+        pill.onclick = () => switchGenre(ch.id);
+
+        pill.innerHTML = `
+          <span class="genre-dot" style="background:${ch.color};"></span>
+          <span>${idx + 1}. ${ch.title}</span>
+          <span style="font-size:9px; opacity:0.8;">(${ch.questions ? ch.questions.length : 0})</span>
+        `;
+        bar.appendChild(pill);
+      });
+    }
+
+    function switchGenre(genreId) {
+      appData.activeGenreId = genreId;
+      saveData();
+      renderGenreNavBar();
+      renderActiveGenreQuestions();
+    }
+
+    /* 検索 ＆ 未回答フィルター操作 (案4) */
+    function onSearchInput(val) {
+      questionSearchQuery = val.trim().toLowerCase();
+      const clearBtn = document.getElementById("searchClearBtn");
+      if (clearBtn) clearBtn.style.display = questionSearchQuery ? 'block' : 'none';
+      renderActiveGenreQuestions();
+    }
+    function clearSearchInput() {
+      const inEl = document.getElementById("questionSearchInput");
+      if (inEl) inEl.value = "";
+      questionSearchQuery = "";
+      const clearBtn = document.getElementById("searchClearBtn");
+      if (clearBtn) clearBtn.style.display = 'none';
+      renderActiveGenreQuestions();
+    }
+    function setQuestionFilter(mode) {
+      questionFilterMode = mode;
+      document.getElementById("filterChip_all").className = `filter-chip ${mode === 'all' ? 'active' : ''}`;
+      document.getElementById("filterChip_unanswered").className = `filter-chip ${mode === 'unanswered' ? 'active' : ''}`;
+      document.getElementById("filterChip_answered").className = `filter-chip ${mode === 'answered' ? 'active' : ''}`;
+      renderActiveGenreQuestions();
+    }
+
+    async function renderActiveGenreQuestions() {
+      const curGenre = getActiveGenre();
+      document.documentElement.style.setProperty('--genre-color', curGenre.color || '#f59e0b');
+
+      const allQs = curGenre.questions || [];
+      const c = getActiveChar();
+
+      // 各質問の回答状況の判定ヘルパー
+      function isQuestionAnswered(qId) {
+        if (!c.answers || !c.answers[qId]) return false;
+        const ans = c.answers[qId];
+        return (ans.patterns || []).some(p => (p.quote && p.quote.trim()) || (p.stage && p.stage.trim()) || (p.mind && p.mind.trim()));
+      }
+
+      // 件数集計
+      let totalCount = allQs.length;
+      let answeredCount = 0;
+      let unansweredCount = 0;
+      allQs.forEach(q => {
+        if (isQuestionAnswered(q.id)) answeredCount++;
+        else unansweredCount++;
+      });
+
+      const countAllEl = document.getElementById("count_all");
+      const countUnEl = document.getElementById("count_unanswered");
+      const countAnsEl = document.getElementById("count_answered");
+      if (countAllEl) countAllEl.textContent = totalCount;
+      if (countUnEl) countUnEl.textContent = unansweredCount;
+      if (countAnsEl) countAnsEl.textContent = answeredCount;
+
+      document.getElementById("curGenreTitle").textContent = `${curGenre.title} (${totalCount}問中 ${answeredCount}問回答済)`;
+      document.getElementById("curGenreDesc").textContent = curGenre.desc;
+      document.getElementById("genreHeroBanner").style.borderLeftColor = curGenre.color;
+
+      const container = document.getElementById("activeQuestionsContainer");
+      container.innerHTML = "";
+
+      // 現在選択中の衣装の立ち絵をアバターとして表示
+      const outfitSrc = await getImageFromDB(`img_${c.id}_${c.currentOutfit || 'casual'}`);
+      const fallbackAvatar = outfitSrc || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%232a3142%22/></svg>';
+
+      // フィルター ＆ 検索適用
+      const filteredQs = allQs.filter(q => {
+        const answered = isQuestionAnswered(q.id);
+        if (questionFilterMode === 'unanswered' && answered) return false;
+        if (questionFilterMode === 'answered' && !answered) return false;
+
+        if (questionSearchQuery) {
+          const matchTitle = (q.title || "").toLowerCase().includes(questionSearchQuery);
+          const matchGuide = (q.guide || "").toLowerCase().includes(questionSearchQuery);
+          const matchAns = c.answers && c.answers[q.id] && (c.answers[q.id].patterns || []).some(p => 
+            (p.quote && p.quote.toLowerCase().includes(questionSearchQuery)) ||
+            (p.stage && p.stage.toLowerCase().includes(questionSearchQuery)) ||
+            (p.mind && p.mind.toLowerCase().includes(questionSearchQuery))
+          );
+          if (!matchTitle && !matchGuide && !matchAns) return false;
+        }
+        return true;
+      });
+
+      if (filteredQs.length === 0) {
+        if (allQs.length === 0) {
+          container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:12px;">この章にはまだ質問がありません。「＋ 質問を追加」から追加してください。</div>`;
+        } else {
+          container.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:12px;">条件に合致する質問は見つかりませんでした（${questionFilterMode === 'unanswered' ? '全て回答済み' : questionFilterMode === 'answered' ? 'まだ回答がありません' : '検索条件を変更してください'}）。</div>`;
+        }
+        return;
+      }
+
+      filteredQs.forEach((q, qIdx) => {
+        const card = document.createElement("div");
+        card.className = "q-card";
+        card.id = `qcard_${q.id}`;
+
+        const ansData = c.answers && c.answers[q.id] ? c.answers[q.id] : {
+          patterns: [{ stage: "", quote: "", mind: "", note: "" }],
+          activeIdx: 0
+        };
+        const curPat = ansData.patterns[ansData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
+
+        let patTabsHtml = "";
+        ansData.patterns.forEach((p, pIdx) => {
+          patTabsHtml += `
+            <span class="pat-pill ${pIdx === ansData.activeIdx ? 'active' : ''}" onclick="switchPattern('${q.id}', ${pIdx})">
+              P${pIdx + 1}
+            </span>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="q-head-row">
+            <span class="q-num-badge">Q.${qIdx + 1}</span>
+            <div style="flex:1;">
+              <div class="q-title-txt">${escapeHtml(q.title)}</div>
+              <div class="q-guide-txt">${escapeHtml(q.guide || '')}</div>
+            </div>
+            <div class="q-ctrls" style="display:flex; align-items:center; gap:5px;">
+              <button class="btn btn-secondary" style="padding:1px 5px; font-size:9px;" onclick="openGeminiPrompt('${q.id}', '${escapeAttr(q.title)}', '${escapeAttr(q.guide || '')}')">
+                🤖 Gemini
+              </button>
+              <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:10px;" onclick="deleteQuestion('${q.id}')" title="削除">✕</button>
+            </div>
+          </div>
+
+          <!-- 対話ボックス -->
+          <div class="dialogue-box">
+            <!-- ト書き -->
+            <div class="stage-row">
+              <span class="stage-tag">仕草</span>
+              <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
+                value="${escapeAttr(curPat.stage || '')}"
+                oninput="updateAnswer('${q.id}', 'stage', this.value)">
+            </div>
+
+            <!-- セリフ＆衣装立ち絵アバター（シンプルで視認性抜群） -->
+            <div class="quote-block">
+              <div class="avatar-wrapper">
+                <div class="avatar-snap" title="現在の衣装立ち絵">
+                  <img src="${fallbackAvatar}">
+                </div>
+              </div>
+              <div class="quote-box-wrap">
+                <textarea class="quote-textarea" placeholder="「キャラクターの返答セリフを入力...」"
+                  oninput="updateAnswer('${q.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
+              </div>
+            </div>
+
+            <!-- パターン操作 -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1px;">
+              <div style="display:flex; gap:3px;">
+                ${patTabsHtml}
+                <button class="btn btn-secondary" style="padding:1px 4px; font-size:9px;" onclick="addPattern('${q.id}')">＋</button>
+                ${ansData.patterns.length > 1 ? `<button class="btn btn-secondary" style="padding:1px 4px; font-size:9px; color:#f87171;" onclick="deletePattern('${q.id}')">✕</button>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- アコーディオン -->
+          <div class="sub-item" id="acc_mind_${q.id}">
+            <div class="sub-head" onclick="toggleAcc('acc_mind_${q.id}')">
+              <span>💭 本音・心の声／急所反応</span>
+              <span style="font-size:8px;">▼</span>
+            </div>
+            <div class="sub-body">
+              <textarea class="sub-txt" placeholder="表向きの返答とは違う心の内、赤面度合い、身体の敏感な反応..."
+                oninput="updateAnswer('${q.id}', 'mind', this.value)">${escapeHtml(curPat.mind || '')}</textarea>
+            </div>
+          </div>
+
+          <div class="sub-item" id="acc_note_${q.id}">
+            <div class="sub-head" onclick="toggleAcc('acc_note_${q.id}')">
+              <span>📝 作者メモ・考察</span>
+              <span style="font-size:8px;">▼</span>
+            </div>
+            <div class="sub-body">
+              <textarea class="sub-txt" placeholder="設定アイデア、裏設定考察..."
+                oninput="updateAnswer('${q.id}', 'note', this.value)">${escapeHtml(curPat.note || '')}</textarea>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    /* 質問追加・削除 */
+    function openAddQModal() {
+      const curGenre = getActiveGenre();
+      document.getElementById("modalChapterTargetDesc").textContent = `「${curGenre.title}」に新しい質問を追加します。`;
+      document.getElementById("newQTitle").value = "";
+      document.getElementById("newQGuide").value = "";
+      document.getElementById("addQuestionModal").style.display = "flex";
+      setTimeout(() => document.getElementById("newQTitle").focus(), 50);
+    }
+    function closeAddQModalDirect() {
+      document.getElementById("addQuestionModal").style.display = "none";
+    }
+    function closeAddQModal(e) {
+      if (e.target.id === "addQuestionModal") closeAddQModalDirect();
+    }
+
+    function submitNewQuestion() {
+      const title = document.getElementById("newQTitle").value.trim();
+      const guide = document.getElementById("newQGuide").value.trim();
+      if (!title) {
+        alert("質問タイトルを入力してください");
+        return;
+      }
+      const curGenre = getActiveGenre();
+      if (!curGenre.questions) curGenre.questions = [];
+      const newQId = `q_custom_${Date.now()}`;
+      curGenre.questions.push({ id: newQId, title: title, guide: guide });
+      saveData();
+      renderGenreNavBar();
+      renderActiveGenreQuestions();
+      closeAddQModalDirect();
+      showToast("質問を追加しました！");
+
+      setTimeout(() => {
+        const card = document.getElementById(`qcard_${newQId}`);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    }
+
+    function deleteQuestion(qId) {
+      if (!confirm("この質問を削除しますか？")) return;
+      const curGenre = getActiveGenre();
+      if (curGenre.questions) {
+        curGenre.questions = curGenre.questions.filter(q => q.id !== qId);
+        const c = getActiveChar();
+        if (c.answers && c.answers[qId]) delete c.answers[qId];
+        saveData();
+        renderGenreNavBar();
+        renderActiveGenreQuestions();
+        showToast("質問を削除しました");
+      }
+    }
+
+    /* 画像処理（衣装用） */
+    function triggerFileSelect(type) {
+      if (type === 'outfit') document.getElementById("portraitFileInput").click();
+    }
+    function handleFileSelect(event, type) {
+      const file = event.target.files[0];
+      if (file) processOutfitImageFile(file);
+    }
+    function handleDragOver(e) {
+      e.preventDefault();
+      document.getElementById("portraitStage").classList.add("dragover");
+    }
+    function handleDragLeave(e) {
+      e.preventDefault();
+      document.getElementById("portraitStage").classList.remove("dragover");
+    }
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById("portraitStage").classList.remove("dragover");
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        processOutfitImageFile(e.dataTransfer.files[0]);
+      }
+    }
+    async function processOutfitImageFile(file) {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const c = getActiveChar();
+        const outfit = c.currentOutfit || "casual";
+        await saveImageToDB(`img_${c.id}_${outfit}`, e.target.result);
+        saveData();
+        await updatePortraitDisplay();
+        renderCharShelf();
+        renderActiveGenreQuestions();
+        showToast("衣装画像を登録しました！");
+      };
+      reader.readAsDataURL(file);
+    }
+    async function promptImageUrl(type) {
+      const url = prompt("画像URLを入力してください:");
+      if (url && url.trim()) {
+        const c = getActiveChar();
+        const outfit = c.currentOutfit || "casual";
+        await saveImageToDB(`img_${c.id}_${outfit}`, url.trim());
+        saveData();
+        await updatePortraitDisplay();
+        renderCharShelf();
+        renderActiveGenreQuestions();
+        showToast("画像URLを設定しました");
+      }
+    }
+    async function clearCurrentOutfitImage() {
+      const c = getActiveChar();
+      const outfit = c.currentOutfit || "casual";
+      if (confirm(`現在の衣装の画像を削除しますか？`)) {
+        await deleteImageFromDB(`img_${c.id}_${outfit}`);
+        saveData();
+        await updatePortraitDisplay();
+        renderCharShelf();
+        renderActiveGenreQuestions();
+      }
+    }
+
+    /* 回答操作 */
+    function updateAnswer(qId, field, val) {
+      const c = getActiveChar();
+      if (!c.answers) c.answers = {};
+      if (!c.answers[qId]) {
+        c.answers[qId] = { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+      }
+      c.answers[qId].patterns[c.answers[qId].activeIdx][field] = val;
+      saveData();
+      renderCharShelf();
+    }
+    function switchPattern(qId, idx) {
+      const c = getActiveChar();
+      if (c.answers && c.answers[qId]) {
+        c.answers[qId].activeIdx = idx;
+        saveData();
+        renderActiveGenreQuestions();
+      }
+    }
+    function addPattern(qId) {
+      const c = getActiveChar();
+      if (!c.answers) c.answers = {};
+      if (!c.answers[qId]) {
+        c.answers[qId] = { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+      }
+      c.answers[qId].patterns.push({ stage: "", quote: "", mind: "", note: "" });
+      c.answers[qId].activeIdx = c.answers[qId].patterns.length - 1;
+      saveData();
+      renderActiveGenreQuestions();
+      showToast("パターンを追加しました");
+    }
+    function deletePattern(qId) {
+      const c = getActiveChar();
+      if (c.answers && c.answers[qId] && c.answers[qId].patterns.length > 1) {
+        c.answers[qId].patterns.splice(c.answers[qId].activeIdx, 1);
+        c.answers[qId].activeIdx = Math.max(0, c.answers[qId].activeIdx - 1);
+        saveData();
+        renderActiveGenreQuestions();
+        showToast("パターンを削除しました");
+      }
+    }
+
+    function toggleAcc(id) {
+      const item = document.getElementById(id);
+      if (item) item.classList.toggle("open");
+    }
+
+    function toggleViewMode() {
+      isViewMode = !isViewMode;
+      document.body.classList.toggle("is-view-mode", isViewMode);
+      const btn = document.getElementById("viewModeToggleBtn");
+      if (isViewMode) {
+        btn.classList.add("active");
+        btn.textContent = "✏️ 編集に戻す";
+        showToast("閲覧モード：すっきり鑑賞できます");
+      } else {
+        btn.classList.remove("active");
+        btn.textContent = "📖 閲覧モード";
+      }
+    }
+
+    function addNewCharacter() {
+      const name = prompt("新しいキャラクター名:", "新規キャラクター");
+      if (!name || !name.trim()) return;
+      const newId = `char_${Date.now()}`;
+      const initVoices = {};
+      VOICE_PRESETS.forEach(v => {
+        initVoices[v.id] = { stage: v.defaultStage, quote: v.defaultQuote, note: "" };
+      });
+
+      const newChar = {
+        id: newId,
+        name: name.trim(),
+        alias: "",
+        gender: "female",
+        age: "",
+        race: "",
+        job: "",
+        position: "none",
+        cv: "",
+        body: "",
+        themeColor: "#ec4899",
+        isLocked: false,
+        currentOutfit: "casual",
+        outfits: JSON.parse(JSON.stringify(DEFAULT_OUTFITS)),
+        radar: {
+          battle: 50,
+          intellect: 50,
+          mental: 50,
+          social: 50,
+          lifestyle: 50,
+          technique: 50,
+          honesty: 50,
+          jealousy: 50,
+          shame: 50,
+          pleasure: 50,
+          devotion: 50,
+          dominance: 50
+        },
+        guides: {},
+        voiceLines: initVoices,
+        sheet: {},
+        traits: [],
+        answers: {}
+      };
+
+      GUIDE_PRESETS.forEach(g => {
+        newChar.guides[g.id] = generateDefaultGuideText(newChar, g.id);
+      });
+
+      appData.characters[newId] = newChar;
+      appData.activeCharId = newId;
+      saveData();
+      renderApp();
+      showToast(`キャラクター「${name}」を作成しました！`);
+    }
+
+    function switchCharacter(id) {
+      if (appData.characters[id]) {
+        appData.activeCharId = id;
+        saveData();
+        renderApp();
+      }
+    }
+
+    /* ==========================================================
+       ドラッグによる横幅リサイズ機能（ウィンドウ風）
+       ========================================================== */
+    function initResizers() {
+      const colLeft = document.getElementById("colLeft");
+      const colCenter = document.getElementById("colCenter");
+      const resizer1 = document.getElementById("resizer1");
+      const resizer2 = document.getElementById("resizer2");
+
+      // 保存された幅があれば復元
+      const savedLeft = localStorage.getItem("col_width_left");
+      const savedCenter = localStorage.getItem("col_width_center");
+      if (savedLeft && !isNaN(savedLeft)) colLeft.style.width = savedLeft + "px";
+      if (savedCenter && !isNaN(savedCenter)) colCenter.style.width = savedCenter + "px";
+
+      let isDragging1 = false;
+      let isDragging2 = false;
+
+      resizer1.addEventListener("mousedown", (e) => {
+        isDragging1 = true;
+        resizer1.classList.add("dragging");
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+      });
+
+      resizer2.addEventListener("mousedown", (e) => {
+        isDragging2 = true;
+        resizer2.classList.add("dragging");
+        document.body.style.cursor = "col-resize";
+        document.body.style.userSelect = "none";
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (isDragging1) {
+          const layoutRect = document.getElementById("mainLayout").getBoundingClientRect();
+          let newW = e.clientX - layoutRect.left;
+          if (newW < 220) newW = 220;
+          if (newW > 650) newW = 650;
+          colLeft.style.width = newW + "px";
+          localStorage.setItem("col_width_left", newW);
+        } else if (isDragging2) {
+          const leftRect = colLeft.getBoundingClientRect();
+          let newW = e.clientX - leftRect.right - 8;
+          if (newW < 320) newW = 320;
+          if (newW > 850) newW = 850;
+          colCenter.style.width = newW + "px";
+          localStorage.setItem("col_width_center", newW);
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (isDragging1 || isDragging2) {
+          isDragging1 = false;
+          isDragging2 = false;
+          resizer1.classList.remove("dragging");
+          resizer2.classList.remove("dragging");
+          document.body.style.cursor = "";
+          document.body.style.userSelect = "";
+        }
+      });
+
+      // ダブルクリックでリセット
+      resizer1.addEventListener("dblclick", () => {
+        colLeft.style.width = "300px";
+        localStorage.setItem("col_width_left", 300);
+      });
+      resizer2.addEventListener("dblclick", () => {
+        colCenter.style.width = "520px";
+        localStorage.setItem("col_width_center", 520);
+      });
+    }
+
+    /* Geminiプロンプト生成 */
+    let currentPromptQId = null;
+
+    function openGeminiPrompt(qId, title, guide) {
+      currentPromptQId = qId;
+      const c = getActiveChar();
+      const s = c.sheet || {};
+
+      let sheetDetails = `
+【キャラクター詳細カルテ】
+名前: ${c.name} (${c.alias || '称号なし'})
+性別: ${c.gender === 'female' ? '女性' : c.gender === 'male' ? '男性' : '中性'}
+年齢: ${c.age || '未設定'} / 種族: ${c.race || '未設定'} / 職業: ${c.job || '未設定'}
+誕生日・血液型: ${s.birth || '未設定'} / 家族・住まい: ${s.family || '未設定'}
+外見・体格: ${s.body_size || '未設定'} / スリーサイズ: ${s.three_size || '未設定'}
+髪・瞳: ${s.hair_eye || '未設定'} / 身体的特徴・傷痕: ${s.scars || s.feature || '未設定'}
+匂い・香り: ${s.smell || '未設定'}
+一人称/二人称: ${s.prono || '未設定'} / 口調特徴: ${s.tone || '未設定'}
+性格・二面性: ${s.personality || '未設定'}
+長所・美徳: ${s.merit || '未設定'} / 短所・脆さ: ${s.demerit || '未設定'}
+声色イメージ: ${c.cv || '未設定'}
+好物/苦手: ${s.likes || '未設定'} / ${s.dislikes || '未設定'}
+戦闘/能力/弱点: ${s.battle || '未設定'}
+攻め受け傾向: ${c.position}
+好みのタイプ: ${s.love_type || '未設定'}
+身体の急所・性感帯: ${c.body || '未設定'}
+フェチ・羞恥耐性: ${s.fetish || '未設定'} / ${s.shame || '未設定'}`;
+
+      if (c.traits && c.traits.length > 0) {
+        sheetDetails += "\n【自由追加設定】\n" + c.traits.map(t => `${t.key}: ${t.val}`).join("\n");
+      }
+
+      const prompt = `あなたは以下のキャラクターとして、インタビュアーの質問に答えてください。
+答えるときはセリフだけでなく、その瞬間の表情や仕草、息遣いなどの【ト書き】も添えて生々しく描写してください。
+
+${sheetDetails}
+
+【インタビュー質問】
+Q: ${title}
+（着眼点: ${guide}）
+
+【出力フォーマット】
+[ト書き]: （答えるときの表情・視線・仕草・身体の反応をカッコ書きで描写）
+[セリフ]: 「キャラクターとしての肉声の返答」
+[本音・心の声]: （口には出さない心の中の真実や、攻め受けとしての動揺・快感・弱み）`;
+
+      document.getElementById("promptModalText").value = prompt;
+      document.getElementById("geminiReplyInput").value = "";
+      document.getElementById("promptModal").style.display = "flex";
+    }
+
+    function closePromptModal() {
+      document.getElementById("promptModal").style.display = "none";
+    }
+    function closeModal(e) {
+      if (e.target.id === "promptModal") closePromptModal();
+    }
+    function copyPromptText() {
+      navigator.clipboard.writeText(document.getElementById("promptModalText").value).then(() => {
+        showToast("Gemini用プロンプトをコピーしました！");
+      });
+    }
+
+    function applyGeminiReply() {
+      const text = document.getElementById("geminiReplyInput").value.trim();
+      if (!text || !currentPromptQId) return;
+
+      let stage = "";
+      let quote = "";
+      let mind = "";
+
+      const stageMatch = text.match(/\[ト書き\]:?\s*([^\n]+)/);
+      if (stageMatch) stage = stageMatch[1].trim();
+
+      const quoteMatch = text.match(/\[セリフ\]:?\s*([^\n]+(?:\n[^\n]+)*?)(?=\n\[|$)/);
+      if (quoteMatch) quote = quoteMatch[1].trim();
+
+      const mindMatch = text.match(/\[本音・心の声\]:?\s*([^\n]+(?:\n[^\n]+)*?)(?=\n\[|$)/);
+      if (mindMatch) mind = mindMatch[1].trim();
+
+      if (!stage && !quote) quote = text;
+
+      const c = getActiveChar();
+      if (!c.answers) c.answers = {};
+      if (!c.answers[currentPromptQId]) {
+        c.answers[currentPromptQId] = { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+      }
+      const curPat = c.answers[currentPromptQId].patterns[c.answers[currentPromptQId].activeIdx];
+      if (stage) curPat.stage = stage;
+      if (quote) curPat.quote = quote;
+      if (mind) curPat.mind = mind;
+
+      saveData();
+      renderActiveGenreQuestions();
+      closePromptModal();
+      showToast("Geminiの回答を取り込みました！");
+
+      const card = document.getElementById(`qcard_${currentPromptQId}`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    /* ==========================================================
+       ① Lightbox全画面立ち絵鑑賞モード (案6)
+       ========================================================== */
+    let lightboxCurrentOutfit = null;
+
+    function onPortraitStageClick(e) {
+      // ツールボタン等のクリック時は伝播停止済み
+      const imgEl = document.getElementById("portraitImg");
+      if (imgEl && imgEl.style.display !== "none" && imgEl.src) {
+        openLightbox();
+      } else {
+        triggerFileSelect('outfit');
+      }
+    }
+
+    async function openLightbox() {
+      const c = getActiveChar();
+      lightboxCurrentOutfit = c.currentOutfit || (c.outfits && c.outfits[0] ? c.outfits[0].id : "casual");
+      
+      document.getElementById("lightboxCharName").textContent = c.name || "キャラクター";
+      renderLightboxOutfitBar();
+      await updateLightboxImage();
+
+      const modal = document.getElementById("lightboxModal");
+      modal.style.display = "flex";
+    }
+
+    function closeLightboxDirect() {
+      document.getElementById("lightboxModal").style.display = "none";
+    }
+    function closeLightbox(e) {
+      if (e.target.id === "lightboxModal" || e.target.classList.contains("lightbox-image-wrap")) {
+        closeLightboxDirect();
+      }
+    }
+
+    function renderLightboxOutfitBar() {
+      const bar = document.getElementById("lightboxOutfitBar");
+      bar.innerHTML = "";
+      const c = getActiveChar();
+      (c.outfits || DEFAULT_OUTFITS).forEach(outfit => {
+        const btn = document.createElement("div");
+        btn.className = `lightbox-outfit-btn ${outfit.id === lightboxCurrentOutfit ? 'active' : ''}`;
+        btn.textContent = outfit.name;
+        btn.onclick = () => switchLightboxOutfit(outfit.id);
+        bar.appendChild(btn);
+      });
+    }
+
+    async function switchLightboxOutfit(outfitId) {
+      lightboxCurrentOutfit = outfitId;
+      renderLightboxOutfitBar();
+      await updateLightboxImage();
+    }
+
+    async function updateLightboxImage() {
+      const c = getActiveChar();
+      const outfit = (c.outfits || DEFAULT_OUTFITS).find(o => o.id === lightboxCurrentOutfit);
+      document.getElementById("lightboxOutfitName").textContent = outfit ? `（${outfit.name}）` : "";
+
+      const src = await getImageFromDB(`img_${c.id}_${lightboxCurrentOutfit}`);
+      const imgEl = document.getElementById("lightboxImg");
+      if (src) {
+        imgEl.src = src;
+        imgEl.style.display = "block";
+      } else {
+        // 画像未登録時
+        imgEl.src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22500%22 viewBox=%220 0 400 500%22><rect width=%22400%22 height=%22500%22 fill=%22%23161b24%22/><text x=%2250%25%22 y=%2250%25%22 fill=%22%2364748b%22 font-size=%2216%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 font-family=%22sans-serif%22>この衣装の画像はまだ登録されていません</text></svg>';
+        imgEl.style.display = "block";
+      }
+    }
+
+    /* ==========================================================
+       ② AIロールプレイ「なりきりシステムプロンプト」一発出力 (案1)
+       ========================================================== */
+    function openAiPromptModal() {
+      const c = getActiveChar();
+      const promptText = generateAiSystemPrompt(c);
+      document.getElementById("aiPromptOutput").value = promptText;
+      document.getElementById("aiPromptModal").style.display = "flex";
+    }
+    function closeAiPromptModalDirect() {
+      document.getElementById("aiPromptModal").style.display = "none";
+    }
+    function closeAiPromptModal(e) {
+      if (e.target.id === "aiPromptModal") closeAiPromptModalDirect();
+    }
+
+    function generateAiSystemPrompt(c) {
+      const s = c.sheet || {};
+      const r = c.radar || {};
+      const pType = detectPersonalityType(c);
+
+      // 回答済みインタビューから代表的なセリフ・ト書きをピックアップ
+      let samples = [];
+      if (c.answers) {
+        for (const [qId, ans] of Object.entries(c.answers)) {
+          if (ans.patterns && ans.patterns.length > 0) {
+            const p = ans.patterns[ans.activeIdx || 0];
+            if (p.quote && p.quote.trim()) {
+              // 質問タイトルを取得
+              let qTitle = qId;
+              for (const ch of (appData.chapters || [])) {
+                const found = (ch.questions || []).find(q => q.id === qId);
+                if (found) { qTitle = found.title; break; }
+              }
+              samples.push({
+                q: qTitle,
+                stage: p.stage || "",
+                quote: p.quote,
+                mind: p.mind || ""
+              });
+            }
+          }
+        }
+      }
+
+      // ボイス集
+      let voicesText = "";
+      if (c.voiceLines) {
+        VOICE_PRESETS.forEach(v => {
+          const vl = c.voiceLines[v.id];
+          if (vl && vl.quote && vl.quote.trim()) {
+            voicesText += `- [${v.label}]:\n  演出: (${vl.stage || '特になし'})\n  台詞: 「${vl.quote}」\n`;
+          }
+        });
+      }
+
+      // サンプル対話テキスト
+      let sampleDialogues = "";
+      if (samples.length > 0) {
+        sampleDialogues = samples.slice(0, 5).map(sm => {
+          return `【問: ${sm.q}】\n${sm.stage ? `(${sm.stage})\n` : ""}「${sm.quote}」${sm.mind ? `\n（内心・本音: ${sm.mind}）` : ""}`;
+        }).join("\n\n");
+      } else {
+        sampleDialogues = `(まだインタビュー回答がありません)`;
+      }
+
+      // 取扱説明書（5シチュエーション）
+      let guideManualsText = "";
+      GUIDE_PRESETS.forEach(gp => {
+        const text = (c.guides && c.guides[gp.id]) ? c.guides[gp.id] : generateDefaultGuideText(c, gp.id);
+        guideManualsText += `### ${gp.icon} 【${gp.title}】\n${text}\n\n`;
+      });
+
+      return `# Roleplay Instruction: ${c.name || 'キャラクター'} なりきりプロンプト
+
+あなたはこれより、以下の詳細設定と性格・口調・身体反応を持つキャラクター「${c.name}」として徹底的になりきって対話・演技を行ってください。
+AIとしてのメタな発言や解説は一切排除し、相手の発言や行動に対して、${c.name}本人の視点・思考・感情・身体の仕草（ト書き）を交えてリアルタイムに応答してください。
+
+---
+
+## 1. 基本プロファイル
+- 名前: ${c.name || '未設定'}${c.alias ? ` (${c.alias})` : ''}
+- 性別・外見: ${c.gender === 'female' ? '女性' : c.gender === 'male' ? '男性' : '中性'} / 年齢: ${c.age || '未設定'}
+- 種族・身元: ${c.race || '未設定'} / 職業・立場: ${c.job || '未設定'}
+- 誕生日・血液型: ${s.birth || '未設定'}
+- 身長・体重・体格: ${s.body_size || '未設定'} / スリーサイズ等: ${s.three_size || '未設定'}
+- 容姿・髪・瞳: ${s.hair_eye || '未設定'}
+- 身体的特徴・傷跡: ${s.feature || ''} ${s.scars || ''}
+- 匂い・体臭・香気: ${s.smell || '未設定'}
+
+## 2. 性格診断タイプ ＆ 内面・口調
+- 性格診断タイプ: 【${pType.title}】（${pType.desc}）
+- 性格傾向解説: ${pType.detail}
+- 一人称: ${s.prono ? s.prono.split('/')[0].trim() : '私'} / 二人称: ${s.prono && s.prono.includes('/') ? s.prono.split('/')[1].trim() : 'アンタ、お前'}
+- 口調の特徴: ${s.tone || '自然な口調'}
+- 性格の核: ${s.personality || '未設定'}
+- 長所・美徳: ${s.merit || '未設定'}
+- 短所・地雷・弱点: ${s.demerit || '未設定'}
+- 好きなもの: ${s.likes || '未設定'} / 嫌いなもの: ${s.dislikes || '未設定'}
+- 戦闘スタイル・能力: ${s.battle || '未設定'}
+
+## 3. 性癖・恋愛観・夜の急所
+- 寝室での傾向（攻め／受け）: ${c.position || '未設定'}
+- 恋愛観・好みのタイプ: ${s.love_type || '未設定'}
+- 性感帯・身体の急所: ${c.body || '未設定'}
+- 嗜好・フェチ: ${s.fetish || '未設定'}
+- 羞恥心 ＆ 快楽屈服度: ${s.shame || '未設定'}
+
+## 4. 表裏12軸パラメータ (0〜100)
+### 【表】日常・冒険 6軸
+- 戦闘力・身体能力: ${r.battle || 50}/100
+- 知性・観察眼: ${r.intellect || 50}/100
+- 精神力・耐久性: ${r.mental || 50}/100
+- 社交性・愛嬌: ${r.social || 50}/100
+- 生活力・家事能力: ${r.lifestyle || 50}/100
+- 器用さ・技術力: ${r.technique || 50}/100
+
+### 【裏】恋愛・夜 6軸
+- 素直さ・デレ度: ${r.honesty || 50}/100
+- 独占欲・執着心: ${r.jealousy || 50}/100
+- 羞恥心・潔癖度: ${r.shame || 50}/100
+- 快楽感度・屈服度: ${r.pleasure || 50}/100
+- 奉仕欲・従属性: ${r.devotion || 50}/100
+- 支配・被虐性: ${r.dominance || 50}/100
+
+## 5. シチュエーション別 取扱説明書（攻略ヒント）
+${guideManualsText}
+## 6. シチュエーション別 決め台詞集
+${voicesText || '(未設定)'}
+
+## 7. 模範口調・リアクションサンプル
+${sampleDialogues}
+
+---
+
+## 演技のルールと出力フォーマット
+1. 発言には必ず【ト書き（表情、視線の動き、身体の反応、赤面、息遣い等）】をカッコ () で添えてください。
+2. 一人称・二人称、および口調の崩れに細心の注意を払ってください。
+3. 相手からの親愛やスキンシップ、急所への接触に対しては、上記の「表裏12軸パラメータ」や「取扱説明書」に忠実な反応（照れ隠し、戸惑い、抗えない喘ぎ等）を描写してください。
+4. 返答例:
+   (少し視線を逸らし、耳を赤く染めながら服の裾をぎゅっと握りしめて)
+   「……別に、アンタのことなんて待ってなかったし。……でも、側から離れたら怒るから。」`;
+    }
+
+    function copyAiPromptText() {
+      const ta = document.getElementById("aiPromptOutput");
+      navigator.clipboard.writeText(ta.value).then(() => {
+        showToast("AIプロンプトをクリップボードにコピーしました！");
+      }).catch(() => {
+        ta.select();
+        document.execCommand("copy");
+        showToast("コピーしました！");
+      });
+    }
+
+    function downloadAiPromptText() {
+      const c = getActiveChar();
+      const text = document.getElementById("aiPromptOutput").value;
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `Prompt_${c.name || 'Character'}_${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast("プロンプトテキストをダウンロードしました");
+    }
+
+    /* ==========================================================
+       ③ 2キャラ掛け合い・関係性対談モード (案2)
+       ========================================================== */
+    function openCrossTalkModal() {
+      const selectA = document.getElementById("crossCharSelectA");
+      const selectB = document.getElementById("crossCharSelectB");
+      selectA.innerHTML = "";
+      selectB.innerHTML = "";
+
+      const charKeys = Object.keys(appData.characters);
+      charKeys.forEach((k, idx) => {
+        const c = appData.characters[k];
+        const optA = document.createElement("option");
+        optA.value = k;
+        optA.textContent = c.name || "名称未設定";
+        selectA.appendChild(optA);
+
+        const optB = document.createElement("option");
+        optB.value = k;
+        optB.textContent = c.name || "名称未設定";
+        selectB.appendChild(optB);
+      });
+
+      // デフォルト選択: Aはアクティブキャラ、Bは別キャラ
+      selectA.value = appData.activeCharId;
+      if (charKeys.length > 1) {
+        selectB.value = charKeys.find(k => k !== appData.activeCharId) || charKeys[0];
+      } else {
+        selectB.value = charKeys[0];
+      }
+
+      onCrossCharChange();
+      document.getElementById("crossTalkModal").style.display = "flex";
+    }
+
+    function closeCrossTalkModalDirect() {
+      document.getElementById("crossTalkModal").style.display = "none";
+    }
+    function closeCrossTalkModal(e) {
+      if (e.target.id === "crossTalkModal") closeCrossTalkModalDirect();
+    }
+
+    function onCrossCharChange() {
+      const aId = document.getElementById("crossCharSelectA").value;
+      const bId = document.getElementById("crossCharSelectB").value;
+
+      if (!appData.relationships) appData.relationships = {};
+      const relAB = appData.relationships[`${aId}_${bId}`] || { call: "", relation: "" };
+      const relBA = appData.relationships[`${bId}_${aId}`] || { call: "", relation: "" };
+
+      document.getElementById("crossCallAtoB").value = relAB.call || relAB.relation || "";
+      document.getElementById("crossCallBtoA").value = relBA.call || relBA.relation || "";
+
+      // 過去の保存ログがあれば復元
+      if (!appData.crossTalkLogs) appData.crossTalkLogs = {};
+      const logKey = `${aId}__${bId}`;
+      const logKeyRev = `${bId}__${aId}`;
+      document.getElementById("crossTalkLogInput").value = appData.crossTalkLogs[logKey] || appData.crossTalkLogs[logKeyRev] || "";
+
+      generateCrossTalkPrompt();
+    }
+
+    function generateCrossTalkPrompt() {
+      const aId = document.getElementById("crossCharSelectA").value;
+      const bId = document.getElementById("crossCharSelectB").value;
+      const charA = appData.characters[aId];
+      const charB = appData.characters[bId];
+
+      if (!charA || !charB) return;
+
+      const callAtoB = document.getElementById("crossCallAtoB").value.trim();
+      const callBtoA = document.getElementById("crossCallBtoA").value.trim();
+      const topic = document.getElementById("crossTalkTopic").value.trim() || "お互いの第一印象と、普段言えない本音について";
+
+      const promptText = `# 2キャラクター掛け合い対談シナリオ生成プロンプト
+
+以下の2人のキャラクターによる、自然で臨場感あふれる会話劇（掛け合いシナリオ）を作成してください。
+
+## ■ キャラクターA: ${charA.name}
+- 二つ名・立場: ${charA.alias || ''} (${charA.job || ''})
+- 性格・口調: ${charA.sheet ? charA.sheet.personality : ''} / ${charA.sheet ? charA.sheet.tone : ''}
+- Bへの呼び方・印象: ${callAtoB || '特に設定なし'}
+
+## ■ キャラクターB: ${charB.name}
+- 二つ名・立場: ${charB.alias || ''} (${charB.job || ''})
+- 性格・口調: ${charB.sheet ? charB.sheet.personality : ''} / ${charB.sheet ? charB.sheet.tone : ''}
+- Aへの呼び方・印象: ${callBtoA || '特に設定なし'}
+
+## ■ 対談テーマ・状況設定
+「${topic}」
+
+## ■ 出力条件
+1. 各キャラクターの発言には、表情や仕草・視線の動きをト書き (カッコ書き) で含めてください。
+2. お互いの呼び方や口調の個性を忠実に再現し、掛け合いのテンポと距離感を大事にしてください。
+3. 表向きの会話だけでなく、内心の照れや素直になれない心情が滲み出るような対話にしてください。`;
+
+      document.getElementById("crossTalkPromptOutput").value = promptText;
+    }
+
+    function copyCrossTalkPrompt() {
+      const ta = document.getElementById("crossTalkPromptOutput");
+      navigator.clipboard.writeText(ta.value).then(() => {
+        showToast("掛け合いプロンプトをコピーしました！");
+      }).catch(() => {
+        ta.select();
+        document.execCommand("copy");
+        showToast("コピーしました！");
+      });
+    }
+
+    function saveCrossTalkLog() {
+      const aId = document.getElementById("crossCharSelectA").value;
+      const bId = document.getElementById("crossCharSelectB").value;
+      const log = document.getElementById("crossTalkLogInput").value;
+
+      if (!appData.crossTalkLogs) appData.crossTalkLogs = {};
+      appData.crossTalkLogs[`${aId}__${bId}`] = log;
+
+      // 呼び方設定も相関関係に同期保存
+      const callAtoB = document.getElementById("crossCallAtoB").value.trim();
+      const callBtoA = document.getElementById("crossCallBtoA").value.trim();
+      if (!appData.relationships) appData.relationships = {};
+      if (!appData.relationships[`${aId}_${bId}`]) appData.relationships[`${aId}_${bId}`] = {};
+      if (!appData.relationships[`${bId}_${aId}`]) appData.relationships[`${bId}_${aId}`] = {};
+      appData.relationships[`${aId}_${bId}`].call = callAtoB;
+      appData.relationships[`${bId}_${aId}`].call = callBtoA;
+
+      saveData();
+      showToast("対談ログと関係性を保存しました！");
+    }
+
+    /* ==========================================================
+       ④ 複数キャラの「相関図・呼び方マトリクス」 (案10)
+       ========================================================== */
+    function openRelationMatrixModal() {
+      renderRelationMatrix();
+      document.getElementById("relationMatrixModal").style.display = "flex";
+    }
+    function closeRelationMatrixModalDirect() {
+      document.getElementById("relationMatrixModal").style.display = "none";
+    }
+    function closeRelationMatrixModal(e) {
+      if (e.target.id === "relationMatrixModal") closeRelationMatrixModalDirect();
+    }
+
+    function renderRelationMatrix() {
+      const container = document.getElementById("matrixTableContainer");
+      const charList = Object.values(appData.characters);
+
+      if (charList.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">キャラクターが存在しません。</div>`;
+        return;
+      }
+
+      if (!appData.relationships) appData.relationships = {};
+
+      let html = `<table class="matrix-table"><thead><tr><th style="min-width:100px;">From \\ To</th>`;
+      charList.forEach(toC => {
+        html += `<th>${escapeHtml(toC.name || '未設定')}</th>`;
+      });
+      html += `</tr></thead><tbody>`;
+
+      charList.forEach(fromC => {
+        html += `<tr>`;
+        html += `<th style="background:var(--bg-surface); text-align:left; padding-left:10px;">👤 ${escapeHtml(fromC.name || '未設定')}</th>`;
+
+        charList.forEach(toC => {
+          if (fromC.id === toC.id) {
+            html += `<td class="matrix-cell-self">— (本人) —</td>`;
+          } else {
+            const relKey = `${fromC.id}_${toC.id}`;
+            const relData = appData.relationships[relKey] || { call: "", relation: "" };
+            html += `
+              <td>
+                <input type="text" class="matrix-in-call" placeholder="相手の呼び方 (例: ○○さん)"
+                  value="${escapeAttr(relData.call || '')}"
+                  oninput="updateRelationshipCell('${fromC.id}', '${toC.id}', 'call', this.value)">
+                <input type="text" class="matrix-in-relation" placeholder="関係性 (例: 信頼、警戒)"
+                  value="${escapeAttr(relData.relation || '')}"
+                  oninput="updateRelationshipCell('${fromC.id}', '${toC.id}', 'relation', this.value)">
+              </td>
+            `;
+          }
+        });
+
+        html += `</tr>`;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function updateRelationshipCell(fromId, toId, field, val) {
+      if (!appData.relationships) appData.relationships = {};
+      const key = `${fromId}_${toId}`;
+      if (!appData.relationships[key]) appData.relationships[key] = { call: "", relation: "" };
+      appData.relationships[key][field] = val;
+      saveData();
+    }
+
+    /* ==========================================================
+       ⑤ 設定資料エクスポート (案3)
+       ========================================================== */
+    let currentExportFormat = 'markdown'; // 'markdown' | 'text'
+
+    function openDocExportModal() {
+      updateDocExportOutput();
+      document.getElementById("docExportModal").style.display = "flex";
+    }
+    function closeDocExportModalDirect() {
+      document.getElementById("docExportModal").style.display = "none";
+    }
+    function closeDocExportModal(e) {
+      if (e.target.id === "docExportModal") closeDocExportModalDirect();
+    }
+
+    function switchExportFormat(fmt) {
+      currentExportFormat = fmt;
+      document.getElementById("exportTabMarkdownBtn").className = `btn btn-secondary ${fmt === 'markdown' ? 'active' : ''}`;
+      document.getElementById("exportTabTextBtn").className = `btn btn-secondary ${fmt === 'text' ? 'active' : ''}`;
+      updateDocExportOutput();
+    }
+
+    function updateDocExportOutput() {
+      const c = getActiveChar();
+      const outEl = document.getElementById("docExportOutput");
+      if (currentExportFormat === 'markdown') {
+        outEl.value = generateDocMarkdown(c);
+      } else {
+        outEl.value = generateDocPlainText(c);
+      }
+    }
+
+    function generateDocMarkdown(c) {
+      const s = c.sheet || {};
+      const r = c.radar || {};
+      const pType = detectPersonalityType(c);
+
+      let md = `# キャラクターカルテ ＆ 設定資料録: ${c.name || '未設定'}\n\n`;
+      md += `> 二つ名: ${c.alias || 'なし'} / 出力日時: ${new Date().toLocaleDateString('ja-JP')}\n`;
+      md += `> 性格診断タイプ: **【${pType.title}】** （${pType.desc}）\n\n`;
+
+      md += `## 1. 基本・パーソナル\n`;
+      md += `- **名前**: ${c.name || '未設定'}\n`;
+      md += `- **性別**: ${c.gender === 'female' ? '女性' : c.gender === 'male' ? '男性' : '中性'}\n`;
+      md += `- **年齢 / 外見年齢**: ${c.age || '未設定'}\n`;
+      md += `- **種族**: ${c.race || '未設定'}\n`;
+      md += `- **職業 / 肩書**: ${c.job || '未設定'}\n`;
+      md += `- **誕生日 / 星座 / 血液型**: ${s.birth || '未設定'}\n`;
+      md += `- **家族・出身・現住まい**: ${s.family || '未設定'}\n\n`;
+
+      md += `## 2. 外見・身体的特徴\n`;
+      md += `- **身長・体重・体格**: ${s.body_size || '未設定'}\n`;
+      md += `- **スリーサイズ・肌質**: ${s.three_size || '未設定'}\n`;
+      md += `- **髪型・髪色・瞳の色**: ${s.hair_eye || '未設定'}\n`;
+      md += `- **身体の特徴・利き手**: ${s.feature || '未設定'}\n`;
+      md += `- **傷跡・アザ・刺青**: ${s.scars || '未設定'}\n`;
+      md += `- **匂い・香気**: ${s.smell || '未設定'}\n\n`;
+
+      md += `## 3. 声・口調・内面性格\n`;
+      md += `- **性格診断タイプ**: 【${pType.title}】 - ${pType.desc}\n`;
+      md += `- **性格診断解説**: ${pType.detail}\n`;
+      md += `- **一人称 / 二人称**: ${s.prono || '未設定'}\n`;
+      md += `- **話し方・口調の特徴**: ${s.tone || '未設定'}\n`;
+      md += `- **声のイメージ**: ${c.cv || '未設定'}\n`;
+      md += `- **性格の核・行動原理**: ${s.personality || '未設定'}\n`;
+      md += `- **長所・美徳**: ${s.merit || '未設定'}\n`;
+      md += `- **短所・弱点・コンプレックス**: ${s.demerit || '未設定'}\n`;
+      md += `- **好きなもの**: ${s.likes || '未設定'} / **嫌いなもの**: ${s.dislikes || '未設定'}\n`;
+      md += `- **趣味・休日の過ごし方**: ${s.hobby || '未設定'}\n`;
+      md += `- **嗜好品・お酒**: ${s.luxury || '未設定'}\n`;
+      md += `- **戦闘能力・武器・弱点**: ${s.battle || '未設定'}\n\n`;
+
+      md += `## 4. 恋愛観・性向・急所\n`;
+      md += `- **寝室での傾向**: ${c.position || '未設定'}\n`;
+      md += `- **好みのタイプ・恋愛観**: ${s.love_type || '未設定'}\n`;
+      md += `- **性感帯・急所**: ${c.body || '未設定'}\n`;
+      md += `- **フェチ・性癖**: ${s.fetish || '未設定'}\n`;
+      md += `- **羞恥心 / 快楽屈服度**: ${s.shame || '未設定'}\n\n`;
+
+      md += `## 5. 表裏12軸特性パラメータ\n`;
+      md += `### 【表】日常・冒険 6軸\n`;
+      md += `- 戦闘力・身体能力: ${r.battle || 50}/100\n`;
+      md += `- 知性・観察眼: ${r.intellect || 50}/100\n`;
+      md += `- 精神力・耐久性: ${r.mental || 50}/100\n`;
+      md += `- 社交性・愛嬌: ${r.social || 50}/100\n`;
+      md += `- 生活力・家事能力: ${r.lifestyle || 50}/100\n`;
+      md += `- 器用さ・技術力: ${r.technique || 50}/100\n\n`;
+
+      md += `### 【裏】恋愛・夜 6軸\n`;
+      md += `- 素直さ・デレ度: ${r.honesty || 50}/100\n`;
+      md += `- 独占欲・執着心: ${r.jealousy || 50}/100\n`;
+      md += `- 羞恥心・潔癖度: ${r.shame || 50}/100\n`;
+      md += `- 快楽感度・屈服度: ${r.pleasure || 50}/100\n`;
+      md += `- 奉仕欲・従属性: ${r.devotion || 50}/100\n`;
+      md += `- 支配・被虐性: ${r.dominance || 50}/100\n\n`;
+
+      md += `## 6. シチュエーション別 取扱説明書（攻略ヒント）\n`;
+      GUIDE_PRESETS.forEach(gp => {
+        const text = (c.guides && c.guides[gp.id]) ? c.guides[gp.id] : generateDefaultGuideText(c, gp.id);
+        md += `### ${gp.icon} 【${gp.title}】\n${text}\n\n`;
+      });
+
+      md += `## 7. シチュエーションボイス集\n`;
+      if (c.voiceLines) {
+        VOICE_PRESETS.forEach(v => {
+          const vl = c.voiceLines[v.id];
+          if (vl && (vl.quote || vl.stage)) {
+            md += `### ${v.label}\n`;
+            if (vl.stage) md += `*${vl.stage}*\n`;
+            if (vl.quote) md += `「${vl.quote}」\n`;
+            if (vl.note) md += `> 備考: ${vl.note}\n`;
+            md += `\n`;
+          }
+        });
+      }
+
+      md += `## 7. インタビュー対談全録（回答済み一覧）\n`;
+      (appData.chapters || []).forEach(ch => {
+        let chAnswers = [];
+        (ch.questions || []).forEach((q, idx) => {
+          if (c.answers && c.answers[q.id]) {
+            const ans = c.answers[q.id];
+            const p = (ans.patterns || [])[ans.activeIdx || 0];
+            if (p && (p.quote || p.stage)) {
+              chAnswers.push({ q, p, num: idx + 1 });
+            }
+          }
+        });
+
+        if (chAnswers.length > 0) {
+          md += `### ${ch.title}\n\n`;
+          chAnswers.forEach(item => {
+            md += `#### Q.${item.num} ${item.q.title}\n`;
+            if (item.p.stage) md += `*(${item.p.stage})*\n`;
+            if (item.p.quote) md += `「${item.p.quote}」\n`;
+            if (item.p.mind) md += `> 💭 本音: ${item.p.mind}\n`;
+            if (item.p.note) md += `> 📝 メモ: ${item.p.note}\n`;
+            md += `\n`;
+          });
+        }
+      });
+
+      return md;
+    }
+
+    function generateDocPlainText(c) {
+      const md = generateDocMarkdown(c);
+      return md.replace(/#{1,6}\s?/g, '')
+               .replace(/\*\*(.*?)\*\*/g, '$1')
+               .replace(/\*(.*?)\*/g, '$1')
+               .replace(/>\s?/g, '');
+    }
+
+    function copyDocExportText() {
+      const ta = document.getElementById("docExportOutput");
+      navigator.clipboard.writeText(ta.value).then(() => {
+        showToast("資料テキストをコピーしました！");
+      }).catch(() => {
+        ta.select();
+        document.execCommand("copy");
+        showToast("コピーしました！");
+      });
+    }
+
+    function downloadDocExportFile() {
+      const c = getActiveChar();
+      const ext = currentExportFormat === 'markdown' ? 'md' : 'txt';
+      const text = document.getElementById("docExportOutput").value;
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `CharacterDoc_${c.name || 'Char'}_${new Date().toISOString().slice(0, 10)}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast(`資料ファイル (.${ext}) を保存しました`);
+    }
+
+    function printCharacterDoc() {
+      const c = getActiveChar();
+      const md = generateDocMarkdown(c);
+      const printWin = window.open("", "_blank");
+      if (!printWin) {
+        alert("ポップアップがブロックされました。ブラウザの設定で許可してください。");
+        return;
+      }
+      
+      const lines = md.split("\n").map(l => {
+        if (l.startsWith("# ")) return `<h1 style="border-bottom:2px solid #333; padding-bottom:4px; margin-top:20px;">${escapeHtml(l.slice(2))}</h1>`;
+        if (l.startsWith("## ")) return `<h2 style="border-bottom:1px solid #ccc; padding-bottom:3px; margin-top:16px;">${escapeHtml(l.slice(3))}</h2>`;
+        if (l.startsWith("### ")) return `<h3 style="margin-top:12px; color:#444;">${escapeHtml(l.slice(4))}</h3>`;
+        if (l.startsWith("#### ")) return `<h4 style="margin-top:8px;">${escapeHtml(l.slice(5))}</h4>`;
+        if (l.startsWith("- ")) return `<li style="margin-left:20px; font-size:12px;">${escapeHtml(l.slice(2))}</li>`;
+        if (l.startsWith("> ")) return `<blockquote style="margin:4px 0 4px 16px; color:#666; font-size:11px; border-left:3px solid #ccc; padding-left:8px;">${escapeHtml(l.slice(2))}</blockquote>`;
+        if (l.trim()) return `<p style="margin:4px 0; font-size:12px; line-height:1.6;">${escapeHtml(l)}</p>`;
+        return "";
+      }).join("");
+
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${escapeHtml(c.name || 'Character')} - カルテ印刷</title>
+          <style>
+            body { font-family: serif; padding: 25px; color: #111; max-width: 800px; margin: 0 auto; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          ${lines}
+          <script>
+            window.onload = function() { window.print(); };
+          <\/script>
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+    }
+
+    /* ==========================================================
+       モーダル汎用ヘルパー ＆ ESCキー処理
+       ========================================================== */
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "flex";
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    }
+    function handleModalClick(e, id) {
+      if (e.target.id === id) closeModal(id);
+    }
+
+    function openDataSyncModal() { openModal("dataSyncModal"); }
+    function closeDataSyncModalDirect() { closeModal("dataSyncModal"); }
+    function closeDataSyncModal(e) { handleModalClick(e, "dataSyncModal"); }
+
+    // ESCキーで全モーダルを閉じる
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeLightboxDirect();
+        closeAiPromptModalDirect();
+        closeCrossTalkModalDirect();
+        closeRelationMatrixModalDirect();
+        closeDocExportModalDirect();
+        closePromptModal();
+        closeAddQModalDirect();
+        closeDataSyncModalDirect();
+        closeMobileMenu();
+      }
+    });
+
+    /* ==========================================================
+       スマホ用カラム切替 ＆ メニュー操作
+       ========================================================== */
+    let currentMobileCol = 'left';
+    function switchMobileCol(colName) {
+      currentMobileCol = colName;
+      const cols = {
+        left: document.getElementById("colLeft"),
+        center: document.getElementById("colCenter"),
+        right: document.getElementById("colRight")
+      };
+      const btns = {
+        left: document.getElementById("mobNavBtnLeft"),
+        center: document.getElementById("mobNavBtnCenter"),
+        right: document.getElementById("mobNavBtnRight")
+      };
+
+      for (const [key, el] of Object.entries(cols)) {
+        if (el) {
+          if (key === colName) el.classList.add("mobile-active-col");
+          else el.classList.remove("mobile-active-col");
+        }
+      }
+      for (const [key, btn] of Object.entries(btns)) {
+        if (btn) {
+          if (key === colName) btn.classList.add("active");
+          else btn.classList.remove("active");
+        }
+      }
+      if (colName === 'center' && centerTabMode === 'radar') {
+        drawRadarChart();
+      }
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById("mobileMenuDropdown");
+      if (menu) menu.classList.toggle("show");
+    }
+    function closeMobileMenu() {
+      const menu = document.getElementById("mobileMenuDropdown");
+      if (menu) menu.classList.remove("show");
+    }
+    document.addEventListener("click", (e) => {
+      const menu = document.getElementById("mobileMenuDropdown");
+      const toggleBtn = document.getElementById("mobileMenuToggleBtn");
+      if (menu && menu.classList.contains("show")) {
+        if (!menu.contains(e.target) && (!toggleBtn || !toggleBtn.contains(e.target))) {
+          menu.classList.remove("show");
+        }
+      }
+    });
+
+    /* ==========================================================
+       データ同期：完全バックアップ(画像全内包) ＆ 通常バックアップ
+       ========================================================== */
+    async function exportFullDataWithImages() {
+      showToast("完全バックアップデータを生成中...");
+      const images = await getAllImagesFromDB();
+      const fullPackage = {
+        packageType: "CharStudioFullPackage",
+        version: "v1.0",
+        exportedAt: new Date().toISOString(),
+        appData: appData,
+        images: images
+      };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(fullPackage));
+      const a = document.createElement("a");
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `CharacterStudio_FULL_BACKUP_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast("立ち絵画像込みの完全バックアップを保存しました！");
+    }
+
+    function triggerFullImport() {
+      document.getElementById("fullFileImporter").click();
+    }
+
+    async function importFullDataWithImages(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.appData && imported.packageType === "CharStudioFullPackage") {
+            if (imported.images && typeof imported.images === 'object') {
+              await saveMultipleImagesToDB(imported.images);
+            }
+            appData = imported.appData;
+            saveData();
+            await renderApp();
+            closeDataSyncModalDirect();
+            showToast("立ち絵画像を含む全データを完全に復元しました！");
+          } else if (imported.characters) {
+            appData = imported;
+            saveData();
+            await renderApp();
+            closeDataSyncModalDirect();
+            showToast("キャラクター設定データを復元しました！");
+          } else {
+            alert("無効なバックアップデータ形式です。");
+          }
+        } catch(err) {
+          alert("読み込みエラー: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const a = document.createElement("a");
+      a.setAttribute("href", dataStr);
+      a.setAttribute("download", `Character_Interview_Studio_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showToast("バックアップJSONをダウンロードしました");
+    }
+
+    function triggerImport() {
+      document.getElementById("fileImporter").click();
+    }
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.characters) {
+            appData = imported;
+            saveData();
+            renderApp();
+            showToast("データを復元・インポートしました！");
+          } else {
+            alert("無効なデータ形式です。");
+          }
+        } catch(err) {
+          alert("読み込みエラー: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    /* ユーティリティ */
+    let toastTimeout;
+    function showToast(msg) {
+      const t = document.getElementById("toastBox");
+      document.getElementById("toastMsg").textContent = msg;
+      t.style.display = "flex";
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { t.style.display = "none"; }, 3000);
+    }
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+    function escapeAttr(str) {
+      if (!str) return '';
+      return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      await openDatabase();
+      loadData();
+      await renderApp();
+      initResizers();
+      switchMobileCol('left');
+    });
+  </script>
+</body>
+</html>
