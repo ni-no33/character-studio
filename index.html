@@ -4082,31 +4082,28 @@
       renderActiveGenreQuestions();
     }
 
-    async function renderActiveGenreQuestions() {
-      const curGenre = getActiveGenre();
-      document.documentElement.style.setProperty('--genre-color', curGenre.color || '#f59e0b');
+    // 各質問の回答状況の判定ヘルパー
+    function isQuestionAnswered(qId, c = getActiveChar()) {
+      if (!c || !c.answers || !c.answers[qId]) return false;
+      const ans = c.answers[qId];
+      if (ans.isTargetMode && ans.targets) {
+        return Object.values(ans.targets).some(tData => 
+          (tData.patterns || []).some(p => (p.quote && p.quote.trim()) || (p.stage && p.stage.trim()) || (p.mind && p.mind.trim()))
+        );
+      }
+      return (ans.patterns || []).some(p => (p.quote && p.quote.trim()) || (p.stage && p.stage.trim()) || (p.mind && p.mind.trim()));
+    }
 
+    // 質問集計バッジ・件数の更新
+    function updateQuestionCounters() {
+      const curGenre = getActiveGenre();
       const allQs = curGenre.questions || [];
       const c = getActiveChar();
-
-      // 各質問の回答状況の判定ヘルパー
-      function isQuestionAnswered(qId) {
-        if (!c.answers || !c.answers[qId]) return false;
-        const ans = c.answers[qId];
-        if (ans.isTargetMode && ans.targets) {
-          return Object.values(ans.targets).some(tData => 
-            (tData.patterns || []).some(p => (p.quote && p.quote.trim()) || (p.stage && p.stage.trim()) || (p.mind && p.mind.trim()))
-          );
-        }
-        return (ans.patterns || []).some(p => (p.quote && p.quote.trim()) || (p.stage && p.stage.trim()) || (p.mind && p.mind.trim()));
-      }
-
-      // 件数集計
       let totalCount = allQs.length;
       let answeredCount = 0;
       let unansweredCount = 0;
       allQs.forEach(q => {
-        if (isQuestionAnswered(q.id)) answeredCount++;
+        if (isQuestionAnswered(q.id, c)) answeredCount++;
         else unansweredCount++;
       });
 
@@ -4117,7 +4114,407 @@
       if (countUnEl) countUnEl.textContent = unansweredCount;
       if (countAnsEl) countAnsEl.textContent = answeredCount;
 
-      document.getElementById("curGenreTitle").textContent = `${curGenre.title} (${totalCount}問中 ${answeredCount}問回答済)`;
+      const titleEl = document.getElementById("curGenreTitle");
+      if (titleEl) titleEl.textContent = `${curGenre.title} (${totalCount}問中 ${answeredCount}問回答済)`;
+    }
+
+    // 質問カード内部HTML生成関数
+    function buildQuestionCardInnerHtml(q, qIdx, c, fallbackAvatar) {
+      if (!c.answers) c.answers = {};
+      if (!c.answers[q.id]) {
+        c.answers[q.id] = {
+          patterns: [{ stage: "", quote: "", mind: "", note: "" }],
+          activeIdx: 0
+        };
+      }
+      const ansData = c.answers[q.id];
+
+      // 相手別モードの判定（明示フラグ、または質問定義のhasTargets）
+      const isTargetMode = ansData.isTargetMode !== undefined ? ansData.isTargetMode : (q.hasTargets === true);
+      const viewLayout = ansData.viewLayout || 'tab';
+      const customTargets = ansData.customTargets || JSON.parse(JSON.stringify(DEFAULT_ANSWER_TARGETS));
+      const activeTargetId = ansData.activeTargetId || (customTargets[0] ? customTargets[0].id : 'user');
+
+      // targetsデータの初期化保証
+      if (!ansData.targets) ansData.targets = {};
+      customTargets.forEach(t => {
+        if (!ansData.targets[t.id]) {
+          if (t.id === 'user' && ansData.patterns && ansData.patterns[0]) {
+            ansData.targets[t.id] = {
+              patterns: JSON.parse(JSON.stringify(ansData.patterns)),
+              activeIdx: ansData.activeIdx || 0
+            };
+          } else {
+            ansData.targets[t.id] = {
+              patterns: [{ stage: "", quote: "", mind: "", note: "" }],
+              activeIdx: 0
+            };
+          }
+        }
+      });
+
+      // 質問ヘッダー操作
+      let headerCtrlsHtml = `
+        <button class="btn btn-secondary ${isTargetMode ? 'active' : ''}" style="padding:1px 6px; font-size:9px;" onclick="toggleTargetMode('${q.id}')" title="相手別（user／気になる人／普通の人）に回答を書き分ける">
+          👥 相手別${isTargetMode ? 'ON' : ''}
+        </button>
+      `;
+      if (isTargetMode) {
+        headerCtrlsHtml += `
+          <button class="btn btn-secondary" style="padding:1px 6px; font-size:9px;" onclick="toggleTargetViewLayout('${q.id}')" title="タブ切り替えと見比べ並べて表示を切り替え">
+            ${viewLayout === 'compare' ? '🗂️ タブ' : '📑 見比べ'}
+          </button>
+        `;
+      }
+      headerCtrlsHtml += `
+        <button class="btn btn-secondary" style="padding:1px 5px; font-size:9px;" onclick="openGeminiPrompt('${q.id}', '${escapeAttr(q.title)}', '${escapeAttr(q.guide || '')}')">
+          🤖 Gemini
+        </button>
+        <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:10px;" onclick="deleteQuestion('${q.id}')" title="削除">✕</button>
+      `;
+
+      let cardContentHtml = "";
+
+      if (isTargetMode) {
+        // --- 相手別モード ---
+        if (viewLayout === 'tab') {
+          // 【タブ表示レイアウト】
+          const curTargetInfo = customTargets.find(t => t.id === activeTargetId) || customTargets[0];
+          const targetData = ansData.targets[curTargetInfo.id] || { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+          const curPat = targetData.patterns[targetData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
+
+          // 相手タブバー
+          let targetTabsHtml = "";
+          customTargets.forEach(t => {
+            const isActive = t.id === curTargetInfo.id;
+            const isDefault = ['user', 'crush', 'normal'].includes(t.id);
+            targetTabsHtml += `
+              <div class="target-tab-pill ${isActive ? 'active' : ''}" onclick="switchTargetTab('${q.id}', '${t.id}')">
+                <span>${escapeHtml(t.label)}</span>
+                ${!isDefault ? `<span class="target-del-btn" onclick="event.stopPropagation(); deleteCustomTarget('${q.id}', '${t.id}')" title="この相手を削除">✕</span>` : ''}
+              </div>
+            `;
+          });
+          targetTabsHtml += `<button class="hand-btn" onclick="promptAddTarget('${q.id}')" title="新しい相手を追加">＋ 相手追加</button>`;
+
+          // パターンタブ
+          let patTabsHtml = "";
+          targetData.patterns.forEach((p, pIdx) => {
+            patTabsHtml += `
+              <span class="pat-pill ${pIdx === targetData.activeIdx ? 'active' : ''}" onclick="switchTargetPattern('${q.id}', '${curTargetInfo.id}', ${pIdx})">
+                P${pIdx + 1}
+              </span>
+            `;
+          });
+
+          // 手元操作用の相手ピル
+          let handTargetPillsHtml = "";
+          customTargets.forEach(t => {
+            const isActive = t.id === curTargetInfo.id;
+            handTargetPillsHtml += `
+              <span class="hand-btn ${isActive ? 'active' : ''}" onclick="switchTargetTab('${q.id}', '${t.id}')">
+                ${t.icon || '👤'} ${escapeHtml(t.label.split(' ')[0] || t.label)}
+              </span>
+            `;
+          });
+
+          cardContentHtml = `
+            <div class="target-mode-header">
+              <div class="target-tab-bar">${targetTabsHtml}</div>
+            </div>
+
+            <!-- 対話ボックス -->
+            <div class="dialogue-box">
+              <div class="stage-row">
+                <span class="stage-tag">${escapeHtml(curTargetInfo.label.split(' ')[0] || '相手')}への仕草</span>
+                <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
+                  value="${escapeAttr(curPat.stage || '')}"
+                  oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'stage', this.value)">
+              </div>
+
+              <div class="quote-block">
+                <div class="avatar-wrapper">
+                  <div class="avatar-snap" title="現在の衣装立ち絵">
+                    <img src="${fallbackAvatar}">
+                  </div>
+                </div>
+                <div class="quote-box-wrap">
+                  <textarea class="quote-textarea" placeholder="「${escapeAttr(curTargetInfo.label)}に向けた返答セリフを入力...」"
+                    oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                <div style="display:flex; gap:3px; align-items:center;">
+                  ${patTabsHtml}
+                  <button class="btn btn-secondary" style="padding:1px 4px; font-size:9px;" onclick="addTargetPattern('${q.id}', '${curTargetInfo.id}')">＋</button>
+                  ${targetData.patterns.length > 1 ? `<button class="btn btn-secondary" style="padding:1px 4px; font-size:9px; color:#f87171;" onclick="deleteTargetPattern('${q.id}', '${curTargetInfo.id}')">✕</button>` : ''}
+                </div>
+                <span style="font-size:9px; color:var(--text-muted);">対象: <strong style="color:var(--genre-color);">${escapeHtml(curTargetInfo.label)}</strong></span>
+              </div>
+            </div>
+
+            <!-- アコーディオン -->
+            <div class="sub-item" id="acc_mind_${q.id}_${curTargetInfo.id}">
+              <div class="sub-head" onclick="toggleAcc('acc_mind_${q.id}_${curTargetInfo.id}')">
+                <span>💭 ${escapeHtml(curTargetInfo.label)}への本音・心の声／急所反応</span>
+                <span style="font-size:8px;">▼</span>
+              </div>
+              <div class="sub-body">
+                <textarea class="sub-txt" placeholder="この相手に向けた心の内、赤面度合い、身体の敏感な反応..."
+                  oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'mind', this.value)">${escapeHtml(curPat.mind || '')}</textarea>
+              </div>
+            </div>
+
+            <div class="sub-item" id="acc_note_${q.id}_${curTargetInfo.id}">
+              <div class="sub-head" onclick="toggleAcc('acc_note_${q.id}_${curTargetInfo.id}')">
+                <span>📝 作者メモ・考察</span>
+                <span style="font-size:8px;">▼</span>
+              </div>
+              <div class="sub-body">
+                <textarea class="sub-txt" placeholder="この相手との関係性メモ、裏設定..."
+                  oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'note', this.value)">${escapeHtml(curPat.note || '')}</textarea>
+              </div>
+            </div>
+
+            <!-- ⚡ 手元操作バー (上まで戻らずその場で操作可能) -->
+            <div class="hand-action-bar">
+              <div class="hand-left-group">
+                <span class="hand-label">手元操作:</span>
+                <button class="hand-btn" onclick="addTargetPattern('${q.id}', '${curTargetInfo.id}')">＋ P追加</button>
+                ${patTabsHtml}
+              </div>
+              <div class="hand-right-group">
+                <span class="hand-label">相手切替:</span>
+                ${handTargetPillsHtml}
+                <button class="hand-btn" onclick="promptAddTarget('${q.id}')">＋ 相手追加</button>
+              </div>
+            </div>
+          `;
+        } else {
+          // 【見比べ並べて表示レイアウト (compare)】
+          let compareBlocksHtml = "";
+          customTargets.forEach(t => {
+            const targetData = ansData.targets[t.id] || { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+            const curPat = targetData.patterns[targetData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
+            const isDefault = ['user', 'crush', 'normal'].includes(t.id);
+
+            let patTabs = "";
+            targetData.patterns.forEach((p, pIdx) => {
+              patTabs += `
+                <span class="pat-pill ${pIdx === targetData.activeIdx ? 'active' : ''}" onclick="switchTargetPattern('${q.id}', '${t.id}', ${pIdx})">
+                  P${pIdx + 1}
+                </span>
+              `;
+            });
+
+            compareBlocksHtml += `
+              <div class="compare-target-block ${t.id === activeTargetId ? 'active-focus' : ''}">
+                <div class="compare-block-header">
+                  <span style="color:var(--text-main); font-size:11px;">${escapeHtml(t.label)}</span>
+                  <div style="display:flex; gap:3px; align-items:center;">
+                    ${patTabs}
+                    <button class="hand-btn" style="padding:1px 4px; font-size:8px;" onclick="addTargetPattern('${q.id}', '${t.id}')">＋</button>
+                    ${!isDefault ? `<button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:9px; margin-left:4px;" onclick="deleteCustomTarget('${q.id}', '${t.id}')">✕</button>` : ''}
+                  </div>
+                </div>
+                <div class="stage-row" style="margin-bottom:3px;">
+                  <span class="stage-tag">仕草</span>
+                  <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
+                    value="${escapeAttr(curPat.stage || '')}"
+                    oninput="updateTargetAnswer('${q.id}', '${t.id}', 'stage', this.value)">
+                </div>
+                <div class="quote-block">
+                  <div class="avatar-wrapper">
+                    <div class="avatar-snap"><img src="${fallbackAvatar}"></div>
+                  </div>
+                  <div class="quote-box-wrap">
+                    <textarea class="quote-textarea" style="height:44px;" placeholder="「${escapeAttr(t.label)}への返答セリフ...」"
+                      oninput="updateTargetAnswer('${q.id}', '${t.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
+                  </div>
+                </div>
+                <div style="margin-top:4px;">
+                  <input type="text" class="stage-input" style="font-size:10px; color:#f43f5e;" placeholder="💭 心の声・本音・反応..."
+                    value="${escapeAttr(curPat.mind || '')}"
+                    oninput="updateTargetAnswer('${q.id}', '${t.id}', 'mind', this.value)">
+                </div>
+              </div>
+            `;
+          });
+
+          cardContentHtml = `
+            <div class="compare-targets-container">
+              ${compareBlocksHtml}
+            </div>
+            <div class="hand-action-bar" style="margin-top:8px;">
+              <div class="hand-left-group">
+                <button class="hand-btn" onclick="toggleTargetViewLayout('${q.id}')">🗂️ タブ表示に切り替え</button>
+              </div>
+              <div class="hand-right-group">
+                <button class="hand-btn" onclick="promptAddTarget('${q.id}')">＋ 新しい相手を追加</button>
+              </div>
+            </div>
+          `;
+        }
+      } else {
+        // --- 通常質問モード (相手別オフ) ---
+        const curPat = ansData.patterns[ansData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
+
+        let patTabsHtml = "";
+        ansData.patterns.forEach((p, pIdx) => {
+          patTabsHtml += `
+            <span class="pat-pill ${pIdx === ansData.activeIdx ? 'active' : ''}" onclick="switchPattern('${q.id}', ${pIdx})">
+              P${pIdx + 1}
+            </span>
+          `;
+        });
+
+        cardContentHtml = `
+          <!-- 対話ボックス -->
+          <div class="dialogue-box">
+            <div class="stage-row">
+              <span class="stage-tag">仕草</span>
+              <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
+                value="${escapeAttr(curPat.stage || '')}"
+                oninput="updateAnswer('${q.id}', 'stage', this.value)">
+            </div>
+
+            <div class="quote-block">
+              <div class="avatar-wrapper">
+                <div class="avatar-snap" title="現在の衣装立ち絵">
+                  <img src="${fallbackAvatar}">
+                </div>
+              </div>
+              <div class="quote-box-wrap">
+                <textarea class="quote-textarea" placeholder="「キャラクターの返答セリフを入力...」"
+                  oninput="updateAnswer('${q.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1px;">
+              <div style="display:flex; gap:3px;">
+                ${patTabsHtml}
+                <button class="btn btn-secondary" style="padding:1px 4px; font-size:9px;" onclick="addPattern('${q.id}')">＋</button>
+                ${ansData.patterns.length > 1 ? `<button class="btn btn-secondary" style="padding:1px 4px; font-size:9px; color:#f87171;" onclick="deletePattern('${q.id}')">✕</button>` : ''}
+              </div>
+            </div>
+          </div>
+
+          <!-- アコーディオン -->
+          <div class="sub-item" id="acc_mind_${q.id}">
+            <div class="sub-head" onclick="toggleAcc('acc_mind_${q.id}')">
+              <span>💭 本音・心の声／急所反応</span>
+              <span style="font-size:8px;">▼</span>
+            </div>
+            <div class="sub-body">
+              <textarea class="sub-txt" placeholder="表向きの返答とは違う心の内、赤面度合い、身体の敏感な反応..."
+                oninput="updateAnswer('${q.id}', 'mind', this.value)">${escapeHtml(curPat.mind || '')}</textarea>
+            </div>
+          </div>
+
+          <div class="sub-item" id="acc_note_${q.id}">
+            <div class="sub-head" onclick="toggleAcc('acc_note_${q.id}')">
+              <span>📝 作者メモ・考察</span>
+              <span style="font-size:8px;">▼</span>
+            </div>
+            <div class="sub-body">
+              <textarea class="sub-txt" placeholder="設定アイデア、裏設定考察..."
+                oninput="updateAnswer('${q.id}', 'note', this.value)">${escapeHtml(curPat.note || '')}</textarea>
+            </div>
+          </div>
+
+          <!-- ⚡ 手元操作バー (通常質問でも手元で操作可能) -->
+          <div class="hand-action-bar">
+            <div class="hand-left-group">
+              <span class="hand-label">手元操作:</span>
+              <button class="hand-btn" onclick="addPattern('${q.id}')">＋ P追加</button>
+              ${patTabsHtml}
+            </div>
+            <div class="hand-right-group">
+              <button class="hand-btn" onclick="toggleTargetMode('${q.id}')">👥 相手別に書き分ける</button>
+            </div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="q-head-row">
+          <span class="q-num-badge">Q.${qIdx + 1}</span>
+          <div style="flex:1;">
+            <div class="q-title-txt">${escapeHtml(q.title)}</div>
+            <div class="q-guide-txt">${escapeHtml(q.guide || '')}</div>
+          </div>
+          <div class="q-ctrls" style="display:flex; align-items:center; gap:4px;">
+            ${headerCtrlsHtml}
+          </div>
+        </div>
+        ${cardContentHtml}
+      `;
+    }
+
+    // 特定のカードのみピンポイントでDOM更新（スクロール位置が一切ブレない）
+    async function renderSingleQuestionCard(qId) {
+      const cardEl = document.getElementById(`qcard_${qId}`);
+      if (!cardEl) {
+        await renderActiveGenreQuestions();
+        return;
+      }
+      const curGenre = getActiveGenre();
+      const allQs = curGenre.questions || [];
+      const qIdx = allQs.findIndex(item => item.id === qId);
+      if (qIdx === -1) {
+        await renderActiveGenreQuestions();
+        return;
+      }
+      const q = allQs[qIdx];
+      const c = getActiveChar();
+      const outfitSrc = await getImageFromDB(`img_${c.id}_${c.currentOutfit || 'casual'}`);
+      const fallbackAvatar = outfitSrc || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%232a3142%22/></svg>';
+
+      // 現在開いているアコーディオンのIDを記録
+      const openAccIds = Array.from(cardEl.querySelectorAll('.sub-item.open')).map(el => el.id);
+
+      // スクロールコンテナとwindowのスクロール位置を保持
+      const colRight = document.getElementById("colRight");
+      const prevScrollTop = colRight ? colRight.scrollTop : 0;
+      const prevWinScroll = window.scrollY;
+
+      // カードの内部HTMLを差し替え
+      cardEl.innerHTML = buildQuestionCardInnerHtml(q, qIdx, c, fallbackAvatar);
+
+      // アコーディオンの開閉状態を復元
+      openAccIds.forEach(id => {
+        const accEl = document.getElementById(id);
+        if (accEl) accEl.classList.add('open');
+      });
+
+      // カウンター集計更新
+      updateQuestionCounters();
+
+      // スクロール位置の完全維持
+      if (colRight) colRight.scrollTop = prevScrollTop;
+      window.scrollTo(0, prevWinScroll);
+    }
+
+    async function renderActiveGenreQuestions(keepScrollQId) {
+      const curGenre = getActiveGenre();
+      document.documentElement.style.setProperty('--genre-color', curGenre.color || '#f59e0b');
+
+      const allQs = curGenre.questions || [];
+      const c = getActiveChar();
+
+      // スクロール位置の退避
+      const colRight = document.getElementById("colRight");
+      const prevScrollTop = colRight ? colRight.scrollTop : 0;
+      const prevWinScroll = window.scrollY;
+      let targetCardTop = 0;
+      if (keepScrollQId) {
+        const el = document.getElementById(`qcard_${keepScrollQId}`);
+        if (el) targetCardTop = el.getBoundingClientRect().top;
+      }
+
+      updateQuestionCounters();
+
       document.getElementById("curGenreDesc").textContent = curGenre.desc;
       document.getElementById("genreHeroBanner").style.borderLeftColor = curGenre.color;
 
@@ -4130,7 +4527,7 @@
 
       // フィルター ＆ 検索適用
       const filteredQs = allQs.filter(q => {
-        const answered = isQuestionAnswered(q.id);
+        const answered = isQuestionAnswered(q.id, c);
         if (questionFilterMode === 'unanswered' && answered) return false;
         if (questionFilterMode === 'answered' && !answered) return false;
 
@@ -4174,340 +4571,23 @@
         const card = document.createElement("div");
         card.className = "q-card";
         card.id = `qcard_${q.id}`;
-
-        if (!c.answers) c.answers = {};
-        if (!c.answers[q.id]) {
-          c.answers[q.id] = {
-            patterns: [{ stage: "", quote: "", mind: "", note: "" }],
-            activeIdx: 0
-          };
-        }
-        const ansData = c.answers[q.id];
-
-        // 相手別モードの判定（明示フラグ、または質問定義のhasTargets）
-        const isTargetMode = ansData.isTargetMode !== undefined ? ansData.isTargetMode : (q.hasTargets === true);
-        const viewLayout = ansData.viewLayout || 'tab';
-        const customTargets = ansData.customTargets || JSON.parse(JSON.stringify(DEFAULT_ANSWER_TARGETS));
-        const activeTargetId = ansData.activeTargetId || (customTargets[0] ? customTargets[0].id : 'user');
-
-        // targetsデータの初期化保証
-        if (!ansData.targets) ansData.targets = {};
-        customTargets.forEach(t => {
-          if (!ansData.targets[t.id]) {
-            if (t.id === 'user' && ansData.patterns && ansData.patterns[0]) {
-              ansData.targets[t.id] = {
-                patterns: JSON.parse(JSON.stringify(ansData.patterns)),
-                activeIdx: ansData.activeIdx || 0
-              };
-            } else {
-              ansData.targets[t.id] = {
-                patterns: [{ stage: "", quote: "", mind: "", note: "" }],
-                activeIdx: 0
-              };
-            }
-          }
-        });
-
-        // 質問ヘッダー操作
-        let headerCtrlsHtml = `
-          <button class="btn btn-secondary ${isTargetMode ? 'active' : ''}" style="padding:1px 6px; font-size:9px;" onclick="toggleTargetMode('${q.id}')" title="相手別（user／気になる人／普通の人）に回答を書き分ける">
-            👥 相手別${isTargetMode ? 'ON' : ''}
-          </button>
-        `;
-        if (isTargetMode) {
-          headerCtrlsHtml += `
-            <button class="btn btn-secondary" style="padding:1px 6px; font-size:9px;" onclick="toggleTargetViewLayout('${q.id}')" title="タブ切り替えと見比べ並べて表示を切り替え">
-              ${viewLayout === 'compare' ? '🗂️ タブ' : '📑 見比べ'}
-            </button>
-          `;
-        }
-        headerCtrlsHtml += `
-          <button class="btn btn-secondary" style="padding:1px 5px; font-size:9px;" onclick="openGeminiPrompt('${q.id}', '${escapeAttr(q.title)}', '${escapeAttr(q.guide || '')}')">
-            🤖 Gemini
-          </button>
-          <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:10px;" onclick="deleteQuestion('${q.id}')" title="削除">✕</button>
-        `;
-
-        let cardContentHtml = "";
-
-        if (isTargetMode) {
-          // --- 相手別モード ---
-          if (viewLayout === 'tab') {
-            // 【タブ表示レイアウト】
-            const curTargetInfo = customTargets.find(t => t.id === activeTargetId) || customTargets[0];
-            const targetData = ansData.targets[curTargetInfo.id] || { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
-            const curPat = targetData.patterns[targetData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
-
-            // 相手タブバー
-            let targetTabsHtml = "";
-            customTargets.forEach(t => {
-              const isActive = t.id === curTargetInfo.id;
-              const isDefault = ['user', 'crush', 'normal'].includes(t.id);
-              targetTabsHtml += `
-                <div class="target-tab-pill ${isActive ? 'active' : ''}" onclick="switchTargetTab('${q.id}', '${t.id}')">
-                  <span>${escapeHtml(t.label)}</span>
-                  ${!isDefault ? `<span class="target-del-btn" onclick="event.stopPropagation(); deleteCustomTarget('${q.id}', '${t.id}')" title="この相手を削除">✕</span>` : ''}
-                </div>
-              `;
-            });
-            targetTabsHtml += `<button class="hand-btn" onclick="promptAddTarget('${q.id}')" title="新しい相手を追加">＋ 相手追加</button>`;
-
-            // パターンタブ
-            let patTabsHtml = "";
-            targetData.patterns.forEach((p, pIdx) => {
-              patTabsHtml += `
-                <span class="pat-pill ${pIdx === targetData.activeIdx ? 'active' : ''}" onclick="switchTargetPattern('${q.id}', '${curTargetInfo.id}', ${pIdx})">
-                  P${pIdx + 1}
-                </span>
-              `;
-            });
-
-            // 手元操作用の相手ピル
-            let handTargetPillsHtml = "";
-            customTargets.forEach(t => {
-              const isActive = t.id === curTargetInfo.id;
-              handTargetPillsHtml += `
-                <span class="hand-btn ${isActive ? 'active' : ''}" onclick="switchTargetTab('${q.id}', '${t.id}')">
-                  ${t.icon || '👤'} ${escapeHtml(t.label.split(' ')[0] || t.label)}
-                </span>
-              `;
-            });
-
-            cardContentHtml = `
-              <div class="target-mode-header">
-                <div class="target-tab-bar">${targetTabsHtml}</div>
-              </div>
-
-              <!-- 対話ボックス -->
-              <div class="dialogue-box">
-                <div class="stage-row">
-                  <span class="stage-tag">${escapeHtml(curTargetInfo.label.split(' ')[0] || '相手')}への仕草</span>
-                  <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
-                    value="${escapeAttr(curPat.stage || '')}"
-                    oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'stage', this.value)">
-                </div>
-
-                <div class="quote-block">
-                  <div class="avatar-wrapper">
-                    <div class="avatar-snap" title="現在の衣装立ち絵">
-                      <img src="${fallbackAvatar}">
-                    </div>
-                  </div>
-                  <div class="quote-box-wrap">
-                    <textarea class="quote-textarea" placeholder="「${escapeAttr(curTargetInfo.label)}に向けた返答セリフを入力...」"
-                      oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
-                  </div>
-                </div>
-
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
-                  <div style="display:flex; gap:3px; align-items:center;">
-                    ${patTabsHtml}
-                    <button class="btn btn-secondary" style="padding:1px 4px; font-size:9px;" onclick="addTargetPattern('${q.id}', '${curTargetInfo.id}')">＋</button>
-                    ${targetData.patterns.length > 1 ? `<button class="btn btn-secondary" style="padding:1px 4px; font-size:9px; color:#f87171;" onclick="deleteTargetPattern('${q.id}', '${curTargetInfo.id}')">✕</button>` : ''}
-                  </div>
-                  <span style="font-size:9px; color:var(--text-muted);">対象: <strong style="color:var(--genre-color);">${escapeHtml(curTargetInfo.label)}</strong></span>
-                </div>
-              </div>
-
-              <!-- アコーディオン -->
-              <div class="sub-item" id="acc_mind_${q.id}_${curTargetInfo.id}">
-                <div class="sub-head" onclick="toggleAcc('acc_mind_${q.id}_${curTargetInfo.id}')">
-                  <span>💭 ${escapeHtml(curTargetInfo.label)}への本音・心の声／急所反応</span>
-                  <span style="font-size:8px;">▼</span>
-                </div>
-                <div class="sub-body">
-                  <textarea class="sub-txt" placeholder="この相手に向けた心の内、赤面度合い、身体の敏感な反応..."
-                    oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'mind', this.value)">${escapeHtml(curPat.mind || '')}</textarea>
-                </div>
-              </div>
-
-              <div class="sub-item" id="acc_note_${q.id}_${curTargetInfo.id}">
-                <div class="sub-head" onclick="toggleAcc('acc_note_${q.id}_${curTargetInfo.id}')">
-                  <span>📝 作者メモ・考察</span>
-                  <span style="font-size:8px;">▼</span>
-                </div>
-                <div class="sub-body">
-                  <textarea class="sub-txt" placeholder="この相手との関係性メモ、裏設定..."
-                    oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'note', this.value)">${escapeHtml(curPat.note || '')}</textarea>
-                </div>
-              </div>
-
-              <!-- ⚡ 手元操作バー (上まで戻らずその場で操作可能) -->
-              <div class="hand-action-bar">
-                <div class="hand-left-group">
-                  <span class="hand-label">手元操作:</span>
-                  <button class="hand-btn" onclick="addTargetPattern('${q.id}', '${curTargetInfo.id}')">＋ P追加</button>
-                  ${patTabsHtml}
-                </div>
-                <div class="hand-right-group">
-                  <span class="hand-label">相手切替:</span>
-                  ${handTargetPillsHtml}
-                  <button class="hand-btn" onclick="promptAddTarget('${q.id}')">＋ 相手追加</button>
-                </div>
-              </div>
-            `;
-          } else {
-            // 【見比べ並べて表示レイアウト (compare)】
-            let compareBlocksHtml = "";
-            customTargets.forEach(t => {
-              const targetData = ansData.targets[t.id] || { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
-              const curPat = targetData.patterns[targetData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
-              const isDefault = ['user', 'crush', 'normal'].includes(t.id);
-
-              let patTabs = "";
-              targetData.patterns.forEach((p, pIdx) => {
-                patTabs += `
-                  <span class="pat-pill ${pIdx === targetData.activeIdx ? 'active' : ''}" onclick="switchTargetPattern('${q.id}', '${t.id}', ${pIdx})">
-                    P${pIdx + 1}
-                  </span>
-                `;
-              });
-
-              compareBlocksHtml += `
-                <div class="compare-target-block ${t.id === activeTargetId ? 'active-focus' : ''}">
-                  <div class="compare-block-header">
-                    <span style="color:var(--text-main); font-size:11px;">${escapeHtml(t.label)}</span>
-                    <div style="display:flex; gap:3px; align-items:center;">
-                      ${patTabs}
-                      <button class="hand-btn" style="padding:1px 4px; font-size:8px;" onclick="addTargetPattern('${q.id}', '${t.id}')">＋</button>
-                      ${!isDefault ? `<button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:9px; margin-left:4px;" onclick="deleteCustomTarget('${q.id}', '${t.id}')">✕</button>` : ''}
-                    </div>
-                  </div>
-                  <div class="stage-row" style="margin-bottom:3px;">
-                    <span class="stage-tag">仕草</span>
-                    <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
-                      value="${escapeAttr(curPat.stage || '')}"
-                      oninput="updateTargetAnswer('${q.id}', '${t.id}', 'stage', this.value)">
-                  </div>
-                  <div class="quote-block">
-                    <div class="avatar-wrapper">
-                      <div class="avatar-snap"><img src="${fallbackAvatar}"></div>
-                    </div>
-                    <div class="quote-box-wrap">
-                      <textarea class="quote-textarea" style="height:44px;" placeholder="「${escapeAttr(t.label)}への返答セリフ...」"
-                        oninput="updateTargetAnswer('${q.id}', '${t.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
-                    </div>
-                  </div>
-                  <div style="margin-top:4px;">
-                    <input type="text" class="stage-input" style="font-size:10px; color:#f43f5e;" placeholder="💭 心の声・本音・反応..."
-                      value="${escapeAttr(curPat.mind || '')}"
-                      oninput="updateTargetAnswer('${q.id}', '${t.id}', 'mind', this.value)">
-                  </div>
-                </div>
-              `;
-            });
-
-            cardContentHtml = `
-              <div class="compare-targets-container">
-                ${compareBlocksHtml}
-              </div>
-              <div class="hand-action-bar" style="margin-top:8px;">
-                <div class="hand-left-group">
-                  <button class="hand-btn" onclick="toggleTargetViewLayout('${q.id}')">🗂️ タブ表示に切り替え</button>
-                </div>
-                <div class="hand-right-group">
-                  <button class="hand-btn" onclick="promptAddTarget('${q.id}')">＋ 新しい相手を追加</button>
-                </div>
-              </div>
-            `;
-          }
-        } else {
-          // --- 通常質問モード (相手別オフ) ---
-          const curPat = ansData.patterns[ansData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
-
-          let patTabsHtml = "";
-          ansData.patterns.forEach((p, pIdx) => {
-            patTabsHtml += `
-              <span class="pat-pill ${pIdx === ansData.activeIdx ? 'active' : ''}" onclick="switchPattern('${q.id}', ${pIdx})">
-                P${pIdx + 1}
-              </span>
-            `;
-          });
-
-          cardContentHtml = `
-            <!-- 対話ボックス -->
-            <div class="dialogue-box">
-              <div class="stage-row">
-                <span class="stage-tag">仕草</span>
-                <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
-                  value="${escapeAttr(curPat.stage || '')}"
-                  oninput="updateAnswer('${q.id}', 'stage', this.value)">
-              </div>
-
-              <div class="quote-block">
-                <div class="avatar-wrapper">
-                  <div class="avatar-snap" title="現在の衣装立ち絵">
-                    <img src="${fallbackAvatar}">
-                  </div>
-                </div>
-                <div class="quote-box-wrap">
-                  <textarea class="quote-textarea" placeholder="「キャラクターの返答セリフを入力...」"
-                    oninput="updateAnswer('${q.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
-                </div>
-              </div>
-
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1px;">
-                <div style="display:flex; gap:3px;">
-                  ${patTabsHtml}
-                  <button class="btn btn-secondary" style="padding:1px 4px; font-size:9px;" onclick="addPattern('${q.id}')">＋</button>
-                  ${ansData.patterns.length > 1 ? `<button class="btn btn-secondary" style="padding:1px 4px; font-size:9px; color:#f87171;" onclick="deletePattern('${q.id}')">✕</button>` : ''}
-                </div>
-              </div>
-            </div>
-
-            <!-- アコーディオン -->
-            <div class="sub-item" id="acc_mind_${q.id}">
-              <div class="sub-head" onclick="toggleAcc('acc_mind_${q.id}')">
-                <span>💭 本音・心の声／急所反応</span>
-                <span style="font-size:8px;">▼</span>
-              </div>
-              <div class="sub-body">
-                <textarea class="sub-txt" placeholder="表向きの返答とは違う心の内、赤面度合い、身体の敏感な反応..."
-                  oninput="updateAnswer('${q.id}', 'mind', this.value)">${escapeHtml(curPat.mind || '')}</textarea>
-              </div>
-            </div>
-
-            <div class="sub-item" id="acc_note_${q.id}">
-              <div class="sub-head" onclick="toggleAcc('acc_note_${q.id}')">
-                <span>📝 作者メモ・考察</span>
-                <span style="font-size:8px;">▼</span>
-              </div>
-              <div class="sub-body">
-                <textarea class="sub-txt" placeholder="設定アイデア、裏設定考察..."
-                  oninput="updateAnswer('${q.id}', 'note', this.value)">${escapeHtml(curPat.note || '')}</textarea>
-              </div>
-            </div>
-
-            <!-- ⚡ 手元操作バー (通常質問でも手元で操作可能) -->
-            <div class="hand-action-bar">
-              <div class="hand-left-group">
-                <span class="hand-label">手元操作:</span>
-                <button class="hand-btn" onclick="addPattern('${q.id}')">＋ P追加</button>
-                ${patTabsHtml}
-              </div>
-              <div class="hand-right-group">
-                <button class="hand-btn" onclick="toggleTargetMode('${q.id}')">👥 相手別に書き分ける</button>
-              </div>
-            </div>
-          `;
-        }
-
-        card.innerHTML = `
-          <div class="q-head-row">
-            <span class="q-num-badge">Q.${qIdx + 1}</span>
-            <div style="flex:1;">
-              <div class="q-title-txt">${escapeHtml(q.title)}</div>
-              <div class="q-guide-txt">${escapeHtml(q.guide || '')}</div>
-            </div>
-            <div class="q-ctrls" style="display:flex; align-items:center; gap:4px;">
-              ${headerCtrlsHtml}
-            </div>
-          </div>
-          ${cardContentHtml}
-        `;
-
+        card.innerHTML = buildQuestionCardInnerHtml(q, qIdx, c, fallbackAvatar);
         container.appendChild(card);
       });
+
+      // スクロール位置の復元
+      if (colRight) {
+        colRight.scrollTop = prevScrollTop;
+      }
+      window.scrollTo(0, prevWinScroll);
+
+      if (keepScrollQId) {
+        const newEl = document.getElementById(`qcard_${keepScrollQId}`);
+        if (newEl && colRight && targetCardTop !== 0) {
+          const newTop = newEl.getBoundingClientRect().top;
+          colRight.scrollTop += (newTop - targetCardTop);
+        }
+      }
     }
 
     /* 質問追加・削除 */
@@ -4636,15 +4716,15 @@
       saveData();
       renderCharShelf();
     }
-    function switchPattern(qId, idx) {
+    async function switchPattern(qId, idx) {
       const c = getActiveChar();
       if (c.answers && c.answers[qId]) {
         c.answers[qId].activeIdx = idx;
         saveData();
-        renderActiveGenreQuestions();
+        await renderSingleQuestionCard(qId);
       }
     }
-    function addPattern(qId) {
+    async function addPattern(qId) {
       const c = getActiveChar();
       if (!c.answers) c.answers = {};
       if (!c.answers[qId]) {
@@ -4653,16 +4733,16 @@
       c.answers[qId].patterns.push({ stage: "", quote: "", mind: "", note: "" });
       c.answers[qId].activeIdx = c.answers[qId].patterns.length - 1;
       saveData();
-      renderActiveGenreQuestions();
+      await renderSingleQuestionCard(qId);
       showToast("パターンを追加しました");
     }
-    function deletePattern(qId) {
+    async function deletePattern(qId) {
       const c = getActiveChar();
       if (c.answers && c.answers[qId] && c.answers[qId].patterns.length > 1) {
         c.answers[qId].patterns.splice(c.answers[qId].activeIdx, 1);
         c.answers[qId].activeIdx = Math.max(0, c.answers[qId].activeIdx - 1);
         saveData();
-        renderActiveGenreQuestions();
+        await renderSingleQuestionCard(qId);
         showToast("パターンを削除しました");
       }
     }
@@ -4687,25 +4767,25 @@
       renderCharShelf();
     }
 
-    function switchTargetTab(qId, targetId) {
+    async function switchTargetTab(qId, targetId) {
       const c = getActiveChar();
       if (c.answers && c.answers[qId]) {
         c.answers[qId].activeTargetId = targetId;
         saveData();
-        renderActiveGenreQuestions();
+        await renderSingleQuestionCard(qId);
       }
     }
 
-    function switchTargetPattern(qId, targetId, idx) {
+    async function switchTargetPattern(qId, targetId, idx) {
       const c = getActiveChar();
       if (c.answers && c.answers[qId] && c.answers[qId].targets && c.answers[qId].targets[targetId]) {
         c.answers[qId].targets[targetId].activeIdx = idx;
         saveData();
-        renderActiveGenreQuestions();
+        await renderSingleQuestionCard(qId);
       }
     }
 
-    function addTargetPattern(qId, targetId) {
+    async function addTargetPattern(qId, targetId) {
       const c = getActiveChar();
       if (!c.answers) c.answers = {};
       if (!c.answers[qId]) c.answers[qId] = { isTargetMode: true, targets: {} };
@@ -4717,11 +4797,11 @@
       ansData.targets[targetId].patterns.push({ stage: "", quote: "", mind: "", note: "" });
       ansData.targets[targetId].activeIdx = ansData.targets[targetId].patterns.length - 1;
       saveData();
-      renderActiveGenreQuestions();
+      await renderSingleQuestionCard(qId);
       showToast("パターンを追加しました");
     }
 
-    function deleteTargetPattern(qId, targetId) {
+    async function deleteTargetPattern(qId, targetId) {
       const c = getActiveChar();
       if (c.answers && c.answers[qId] && c.answers[qId].targets && c.answers[qId].targets[targetId]) {
         const tData = c.answers[qId].targets[targetId];
@@ -4729,13 +4809,13 @@
           tData.patterns.splice(tData.activeIdx, 1);
           tData.activeIdx = Math.max(0, tData.activeIdx - 1);
           saveData();
-          renderActiveGenreQuestions();
+          await renderSingleQuestionCard(qId);
           showToast("パターンを削除しました");
         }
       }
     }
 
-    function toggleTargetMode(qId) {
+    async function toggleTargetMode(qId) {
       const c = getActiveChar();
       if (!c.answers) c.answers = {};
       if (!c.answers[qId]) {
@@ -4745,21 +4825,21 @@
       const curMode = ansData.isTargetMode !== undefined ? ansData.isTargetMode : false;
       ansData.isTargetMode = !curMode;
       saveData();
-      renderActiveGenreQuestions();
+      await renderSingleQuestionCard(qId);
       showToast(ansData.isTargetMode ? "相手別モードを有効にしました" : "通常モードに戻しました");
     }
 
-    function toggleTargetViewLayout(qId) {
+    async function toggleTargetViewLayout(qId) {
       const c = getActiveChar();
       if (!c.answers || !c.answers[qId]) return;
       const ansData = c.answers[qId];
       ansData.viewLayout = ansData.viewLayout === 'compare' ? 'tab' : 'compare';
       saveData();
-      renderActiveGenreQuestions();
+      await renderSingleQuestionCard(qId);
       showToast(ansData.viewLayout === 'compare' ? "見比べ一覧表示に切り替えました" : "タブ表示に切り替えました");
     }
 
-    function promptAddTarget(qId) {
+    async function promptAddTarget(qId) {
       const label = prompt("追加したい相手の名前・関係性（例: 師匠、ライバル、妹）:");
       if (!label || !label.trim()) return;
       const c = getActiveChar();
@@ -4784,11 +4864,11 @@
       ansData.activeTargetId = newTargetId;
       ansData.isTargetMode = true;
       saveData();
-      renderActiveGenreQuestions();
+      await renderSingleQuestionCard(qId);
       showToast(`相手「${label.trim()}」を追加しました！`);
     }
 
-    function deleteCustomTarget(qId, targetId) {
+    async function deleteCustomTarget(qId, targetId) {
       if (['user', 'crush', 'normal'].includes(targetId)) {
         showToast("基本相手（user/気になる人/普通の人）は削除できません");
         return;
@@ -4805,7 +4885,7 @@
         }
         ansData.activeTargetId = 'user';
         saveData();
-        renderActiveGenreQuestions();
+        await renderSingleQuestionCard(qId);
         showToast("相手を削除しました");
       }
     }
