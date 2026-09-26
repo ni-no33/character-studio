@@ -1460,6 +1460,325 @@
     }
 
     /* ==========================================================
+       相手別書き分け UI ＆ 手元操作バー
+       ========================================================== */
+    .target-mode-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+      padding: 3px 6px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .target-tab-bar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex: 1;
+    }
+    .target-tab-bar::-webkit-scrollbar { display: none; }
+    .target-tab-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .target-tab-pill:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+    }
+    .target-tab-pill.active {
+      background: var(--genre-color);
+      color: #10131a;
+      border-color: var(--genre-color);
+      font-weight: 700;
+    }
+    .target-tab-pill .target-del-btn {
+      margin-left: 2px;
+      font-size: 9px;
+      opacity: 0.6;
+      cursor: pointer;
+    }
+    .target-tab-pill .target-del-btn:hover { opacity: 1; }
+
+    /* 手元操作バー (論点②: パターン追加や相手切替を手元で即座に行う) */
+    .hand-action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 6px;
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 5px;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      font-size: 10px;
+    }
+    .hand-left-group, .hand-right-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .hand-btn {
+      padding: 2px 7px;
+      font-size: 10px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-sub);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s ease;
+    }
+    .hand-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+    }
+    .hand-btn.active {
+      background: var(--genre-color);
+      color: #10131a;
+      font-weight: 700;
+      border-color: var(--genre-color);
+    }
+    .hand-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-right: 2px;
+    }
+
+    /* 見比べ表示グリッド */
+    .compare-targets-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .compare-target-block {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 6px;
+      padding: 8px;
+      position: relative;
+    }
+    .compare-target-block.active-focus {
+      border-color: var(--genre-color);
+    }
+    .compare-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* ==========================================================
+       🖼️ キャラクター図鑑・ビューワーモーダル
+       ========================================================== */
+    .char-viewer-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(8, 10, 15, 0.96);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 3000;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .viewer-header {
+      padding: 10px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(16, 19, 26, 0.85);
+      flex-shrink: 0;
+    }
+    .viewer-title-box {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .viewer-name {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      color: var(--text-main);
+    }
+    .viewer-alias {
+      font-size: 13px;
+      color: var(--genre-color);
+      font-style: italic;
+    }
+    .viewer-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .viewer-tab-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .viewer-tab-btn.active {
+      background: var(--genre-color);
+      color: #10131a;
+      border-color: var(--genre-color);
+    }
+    .viewer-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      padding: 15px 20px;
+      gap: 20px;
+    }
+    .viewer-stage-side {
+      width: 360px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .viewer-portrait-wrap {
+      width: 100%;
+      height: calc(100vh - 160px);
+      border-radius: 12px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 40%, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.5) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: zoom-in;
+    }
+    .viewer-portrait-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 15px 25px rgba(0,0,0,0.6));
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .viewer-portrait-img:hover {
+      transform: scale(1.02);
+    }
+    .viewer-outfit-pills {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+      background: rgba(16, 19, 26, 0.88);
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      z-index: 5;
+    }
+    .viewer-outfit-pill {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .viewer-outfit-pill.active {
+      background: var(--genre-color);
+      color: #10131a;
+      font-weight: 700;
+    }
+    .viewer-content-side {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .viewer-card {
+      background: rgba(22, 27, 36, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+    .viewer-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--genre-color);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 6px;
+    }
+    .viewer-speech-bubble {
+      position: relative;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 10px;
+    }
+    .viewer-speech-stage {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 4px;
+    }
+    .viewer-speech-quote {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.6;
+      color: var(--text-main);
+    }
+    .viewer-speech-mind {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.08);
+      font-size: 11px;
+      color: #f43f5e;
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    /* ==========================================================
        📱 スマートフォン・タブレット完全対応レスポンシブ (幅860px以下)
        ========================================================== */
     @media (max-width: 860px) {
@@ -1601,6 +1920,30 @@
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
       }
+
+      /* 図鑑ビューワーのスマホ最適化 */
+      .char-viewer-modal .viewer-body {
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        padding: 10px !important;
+        gap: 12px !important;
+      }
+      .char-viewer-modal .viewer-stage-side {
+        width: 100% !important;
+      }
+      .char-viewer-modal .viewer-portrait-wrap {
+        height: 250px !important;
+      }
+      .char-viewer-modal .viewer-content-side {
+        overflow-y: visible !important;
+        padding-right: 0 !important;
+      }
+      .char-viewer-modal .viewer-header {
+        padding: 8px 12px !important;
+      }
+      .char-viewer-modal .viewer-name {
+        font-size: 16px !important;
+      }
     }
   </style>
 </head>
@@ -1618,6 +1961,7 @@
       <button class="btn btn-secondary header-btn-desktop" onclick="openCrossTalkModal()" title="2人のキャラクターを選んで掛け合い対談・シナリオを作成">👥 2人掛け合い</button>
       <button class="btn btn-secondary header-btn-desktop" onclick="openRelationMatrixModal()" title="キャラクター間の呼び方・関係性マトリクス表">🔗 相関マトリクス</button>
       <button class="btn btn-secondary header-btn-desktop" onclick="openDocExportModal()" title="Markdownやテキスト、印刷形式で設定資料を一括書き出し">📄 資料出力</button>
+      <button class="btn btn-secondary header-btn-desktop" onclick="openCharViewer()" title="余計な枠線や編集UIを排した美麗なキャラクター設定図鑑モード">🖼️ 図鑑ビュー</button>
       <button class="btn btn-viewmode header-btn-desktop" id="viewModeToggleBtn" onclick="toggleViewMode()">📖 閲覧モード</button>
       <button class="btn btn-secondary" onclick="openDataSyncModal()" title="PCとスマホ間の完全データ同期・バックアップ・復元">🔄 データ同期</button>
       
@@ -1627,6 +1971,7 @@
 
     <!-- スマホ用ドロップダウンメニュー -->
     <div class="mobile-menu-dropdown" id="mobileMenuDropdown">
+      <button class="mobile-menu-item" onclick="openCharViewer(); closeMobileMenu();">🖼️ キャラクター図鑑ビュー</button>
       <button class="mobile-menu-item" onclick="openCrossTalkModal(); closeMobileMenu();">👥 2人掛け合い対談</button>
       <button class="mobile-menu-item" onclick="openRelationMatrixModal(); closeMobileMenu();">🔗 相関図・呼び方表</button>
       <button class="mobile-menu-item" onclick="openDocExportModal(); closeMobileMenu();">📄 設定資料エクスポート</button>
@@ -1750,8 +2095,12 @@
             <input type="text" class="dense-input" id="cs_job" placeholder="例: 辺境調査員 / 護衛剣士" oninput="updateProfile('job', this.value)">
           </div>
           <div class="dense-item">
-            <span class="dense-label">家族構成 / 現在の住まい</span>
-            <input type="text" class="dense-input" id="cs_family" placeholder="例: 天涯孤独 / ギルドの一室" oninput="updateSheetField('family', this.value)">
+            <span class="dense-label">家族構成・血縁・両親兄弟</span>
+            <input type="text" class="dense-input" id="cs_family" placeholder="例: 父・母・妹（他界） / 現在は天涯孤独" oninput="updateSheetField('family', this.value)">
+          </div>
+          <div class="dense-item">
+            <span class="dense-label">現住まい・生活拠点・居場所</span>
+            <input type="text" class="dense-input" id="cs_residence" placeholder="例: ギルド併設の宿屋一室、路地裏の隠れ家" oninput="updateSheetField('residence', this.value)">
           </div>
         </div>
       </div>
@@ -2246,6 +2595,41 @@
     </div>
   </div>
 
+  <!-- ⑥ キャラクター図鑑・ビューワーモーダル (単なるキャラビュワー機能) -->
+  <div class="char-viewer-modal" id="charViewerModal">
+    <div class="viewer-header">
+      <div class="viewer-title-box">
+        <span class="viewer-name" id="v_charName">セレスティア</span>
+        <span class="viewer-alias" id="v_charAlias">黄昏の銀狼</span>
+        <span class="personality-badge" id="v_charType" style="margin-left:6px; font-size:10px;">孤高のツンデレ</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div class="viewer-tabs">
+          <button class="viewer-tab-btn active" id="v_tab_overview" onclick="switchViewerTab('overview')">📖 総合カルテ＆トリセツ</button>
+          <button class="viewer-tab-btn" id="v_tab_voices" onclick="switchViewerTab('voices')">💬 ボイス集</button>
+          <button class="viewer-tab-btn" id="v_tab_interview" onclick="switchViewerTab('interview')">🎙️ 対話・インタビュー録</button>
+        </div>
+        <button class="btn btn-secondary" style="font-size:11px;" onclick="closeCharViewer()">✕ 閉じる</button>
+      </div>
+    </div>
+
+    <div class="viewer-body">
+      <!-- 左：特大立ち絵ステージ ＆ 衣装ピル -->
+      <div class="viewer-stage-side">
+        <div class="viewer-portrait-wrap" onclick="openLightboxFromViewer()" title="クリックで全画面拡大鑑賞">
+          <img src="" id="v_portraitImg" class="viewer-portrait-img" alt="Character Portrait">
+          <div class="viewer-outfit-pills" id="v_outfitPills"></div>
+        </div>
+        <div style="font-size:10px; color:var(--text-muted); margin-top:8px; text-align:center;">
+          声のイメージ: <span id="v_charCv" style="color:var(--text-main);"></span>
+        </div>
+      </div>
+
+      <!-- 右：コンテンツエリア（スクロール可能） -->
+      <div class="viewer-content-side" id="v_contentSide"></div>
+    </div>
+  </div>
+
   <!-- トースト -->
   <div class="toast" id="toastBox">
     <span>✔</span> <span id="toastMsg">通知メッセージ</span>
@@ -2360,10 +2744,16 @@
       { id: "ch10", title: "極限状態・IF", color: "#eab308", desc: "命の危機、もしもの世界、キャラクターの底力" }
     ];
 
+    const DEFAULT_ANSWER_TARGETS = [
+      { id: "user", label: "👤 user (あなた)", icon: "👤", color: "#38bdf8" },
+      { id: "crush", label: "💓 気になる人", icon: "💓", color: "#ec4899" },
+      { id: "normal", label: "👥 普通の人・知人", icon: "👥", color: "#94a3b8" }
+    ];
+
     const DEFAULT_QUESTIONS_MAP = {
       "ch01": [
         { id: "q1_1", title: "朝起きて一番にすることは？", guide: "目覚めの良さ、寝起きの機嫌、朝のルーティン" },
-        { id: "q1_2", title: "普段の口調や一人称・二人称は？", guide: "親しい相手と初対面での口調の変化、声のトーン" },
+        { id: "q1_2", title: "普段の口調や一人称・二人称は？", guide: "親しい相手と初対面での口調の変化、声のトーン", hasTargets: true },
         { id: "q1_3", title: "無意識に出てしまう口癖や仕草は？", guide: "考え事をするとき、動揺したときの手の動き" },
         { id: "q1_4", title: "好きな食べ物・嫌いな食べ物は？", guide: "味覚の好み、偏食、食事のマナー" },
         { id: "q1_5", title: "部屋の整頓具合は？私物は多い？", guide: "綺麗好きか大雑把か、収集癖のあるもの" },
@@ -2376,7 +2766,7 @@
         { id: "q1_12", title: "他人からよく言われる『第一印象』と『実際の性格』のギャップは？", guide: "怖そうに見えて優しい、真面目そうに見えて抜けているなど" }
       ],
       "ch02": [
-        { id: "q2_1", title: "初対面の人に対してどんな態度を取る？", guide: "愛想が良いか、警戒して距離を置くか、見下すか" },
+        { id: "q2_1", title: "初対面の人に対してどんな態度を取る？", guide: "愛想が良いか、警戒して距離を置くか、見下すか", hasTargets: true },
         { id: "q2_2", title: "心から信頼している相手はいる？", guide: "家族、相棒、親友、あるいは誰も信じないか" },
         { id: "q2_3", title: "他人に甘えたり頼ったりすることは得意？", guide: "一人で抱え込むタイプか、甘え上手か" },
         { id: "q2_4", title: "集団の中での立ち位置は？", guide: "リーダー、参謀、ムードメーカー、孤高の一匹狼" },
@@ -2396,7 +2786,9 @@
         { id: "q3_6", title: "誰にも話したことのない過去の罪や過ちは？", guide: "悔恨の念、贖罪の意識" },
         { id: "q3_7", title: "過去に戻れるとしたら、いつに戻って何をやり直したい？", guide: "後悔している選択、運命の分かれ道" },
         { id: "q3_8", title: "幼い頃の自分の性格は、今とどう違っていた？", guide: "無邪気だったか、大人びていたか、内向的だったか" },
-        { id: "q3_9", title: "故郷の風景や思い出の味として心に残っているものは？", guide: "郷愁の念、もう二度と帰れない場所" }
+        { id: "q3_9", title: "故郷の風景や思い出の味として心に残っているものは？", guide: "郷愁の念、もう二度と帰れない場所" },
+        { id: "q3_10", title: "家族構成や血縁関係、両親・兄弟への思いは？", guide: "家族との確執、溺愛、死別、あるいは天涯孤独な生い立ち" },
+        { id: "q3_11", title: "現在暮らしている住まいや拠点への愛着は？", guide: "一人暮らしの気楽さ、誰かと同居している日常、居場所への執着" }
       ],
       "ch04": [
         { id: "q4_1", title: "生きる上で最も大切にしているモットーは？", guide: "座右の銘、心の柱にしている信念" },
@@ -2437,7 +2829,7 @@
         { id: "q6_14", title: "ベッドに入ってから眠りに落ちるまでの思考は？", guide: "明日の心配、楽しかった思い出の反芻、妄想に耽る、一瞬で爆睡" },
         { id: "q6_15", title: "もし突然丸一日『完全な自由時間』をもらったら？", guide: "遠くへ一人旅、一日中誰かと密着してダラダラ、趣味に全没頭" },
         { id: "q6_16", title: "休日の終わり（日曜の夜など）を感じたとき、どんな気分になる？", guide: "現実に引き戻される溜息、明日への気合いの入れ直し、もう少し起きていたい駄々" },
-        { id: "q6_17", title: "普段人前では絶対に着ないような『部屋着の姿』は？", guide: "着古して穴の空いた服、サイズがぶかぶかの服、恥ずかしい柄のパジャマ" },
+        { id: "q6_17", title: "普段人前では絶対に着ないような『部屋着の姿』は？", guide: "着古して穴の空いた服、サイズがぶかぶかの服、恥ずかしい柄のパジャマ", hasTargets: true },
         { id: "q6_18", title: "誰かが自宅に急に遊びに来ることになったらどう反応する？", guide: "パニックで慌てて物を押し入れに隠す、平然と迎え入れる、居留守を使う" }
       ],
 
@@ -2457,13 +2849,13 @@
         { id: "q8_1", title: "初恋の思い出や、これまでの恋愛経験・トラウマは？", guide: "淡い記憶、全くの未経験、手痛い失恋の古傷" },
         { id: "q8_2", title: "一目惚れするタイプ？それとも時間をかけて惹かれるタイプ？", guide: "容姿や直感で落ちるか、相手の人柄や誠実さを知ってから落ちるか" },
         { id: "q8_3", title: "惹かれる相手の外見フェチや声・仕草のツボは？", guide: "綺麗な指先、低い声、鎖骨、髪をかきあげる仕草、ギャップのある笑顔" },
-        { id: "q8_4", title: "好きな人ができると、態度や行動にどう変化が現れる？", guide: "無意識に目で追う、逆に冷たく接してしまう、不器用に世話を焼く" },
+        { id: "q8_4", title: "好きな人ができると、態度や行動にどう変化が現れる？", guide: "無意識に目で追う、逆に冷たく接してしまう、不器用に世話を焼く", hasTargets: true },
         { id: "q8_5", title: "好きな人の前でテンパって空回りした経験や癖は？", guide: "口ごもる、噛みまくる、耳まで真っ赤になって逃げ出す、強がって後悔" },
         { id: "q8_6", title: "嫉妬や独占欲は強い方？ヤキモチを焼くとどうなる？", guide: "あからさまに不機嫌になる、押し黙る、無理に笑顔を作る、急に甘えて束縛する" },
-        { id: "q8_7", title: "スキンシップ（手繋ぎ、ハグ、頭ぽんぽん）への抵抗感と本音は？", guide: "人前では拒否するが二人きりなら求めてしまう、触れられるだけで硬直する" },
+        { id: "q8_7", title: "スキンシップ（手繋ぎ、ハグ、頭ぽんぽん）への抵抗感と本音は？", guide: "人前では拒否するが二人きりなら求めてしまう、触れられるだけで硬直する", hasTargets: true },
         { id: "q8_8", title: "告白は自分からする派？それとも言わせたい派？", guide: "ストレートに伝える度胸があるか、回りくどく好意を匂わせるか、耐えきれず待つか" },
         { id: "q8_9", title: "理想のデートシチュエーションや二人きりで過ごしたい場所は？", guide: "賑やかなお祭り、静かな夜の散歩、部屋で映画を見ながら肩を寄せ合う" },
-        { id: "q8_10", title: "恋人に甘えるとき、どんな言動や仕草になる？", guide: "服の裾を掴む、肩に頭を預ける、言葉にできず無言で密着して見つめる" },
+        { id: "q8_10", title: "恋人に甘えるとき、どんな言動や仕草になる？", guide: "服の裾を掴む、肩に頭を預ける、言葉にできず無言で密着して見つめる", hasTargets: true },
         { id: "q8_11", title: "恋人の前で弱音を吐いたり、泣き顔を見せることはできる？", guide: "絶対にプライドが許さないか、その人の前でだけ涙腺が崩壊してしまうか" },
         { id: "q8_12", title: "記念日や誕生日、相手へのプレゼントへのこだわりは？", guide: "手作りの品、相手が欲しがっていたものを密かにリサーチ、照れながら渡す" },
         { id: "q8_13", title: "相手のどんな言葉や仕草に一番ドキッとして胸が高鳴る？", guide: "不意に名前を呼び捨てにされる、至近距離で見つめられる、頭を撫でられる" },
@@ -2803,7 +3195,8 @@
           },
           sheet: {
             birth: "10月24日 / 蠍座 / A型",
-            family: "天涯孤独 / ギルドの一室",
+            family: "天涯孤独",
+            residence: "ギルド併設の宿屋一室、路地裏の隠れ家",
             body_size: "162cm / 48kg / しなやかな筋肉質",
             three_size: "B84(C) W58 H86 / 色白",
             hair_eye: "銀髪ショート、黄金色の瞳",
@@ -3189,6 +3582,7 @@
       document.getElementById("cs_job").value = c.job || "";
       document.getElementById("cs_birth").value = s.birth || "";
       document.getElementById("cs_family").value = s.family || "";
+      document.getElementById("cs_residence").value = s.residence || "";
 
       document.getElementById("cs_body_size").value = s.body_size || "";
       document.getElementById("cs_three_size").value = s.three_size || "";
@@ -3699,6 +4093,11 @@
       function isQuestionAnswered(qId) {
         if (!c.answers || !c.answers[qId]) return false;
         const ans = c.answers[qId];
+        if (ans.isTargetMode && ans.targets) {
+          return Object.values(ans.targets).some(tData => 
+            (tData.patterns || []).some(p => (p.quote && p.quote.trim()) || (p.stage && p.stage.trim()) || (p.mind && p.mind.trim()))
+          );
+        }
         return (ans.patterns || []).some(p => (p.quote && p.quote.trim()) || (p.stage && p.stage.trim()) || (p.mind && p.mind.trim()));
       }
 
@@ -3738,11 +4137,25 @@
         if (questionSearchQuery) {
           const matchTitle = (q.title || "").toLowerCase().includes(questionSearchQuery);
           const matchGuide = (q.guide || "").toLowerCase().includes(questionSearchQuery);
-          const matchAns = c.answers && c.answers[q.id] && (c.answers[q.id].patterns || []).some(p => 
-            (p.quote && p.quote.toLowerCase().includes(questionSearchQuery)) ||
-            (p.stage && p.stage.toLowerCase().includes(questionSearchQuery)) ||
-            (p.mind && p.mind.toLowerCase().includes(questionSearchQuery))
-          );
+          let matchAns = false;
+          if (c.answers && c.answers[q.id]) {
+            const ans = c.answers[q.id];
+            if (ans.isTargetMode && ans.targets) {
+              matchAns = Object.values(ans.targets).some(tData => 
+                (tData.patterns || []).some(p => 
+                  (p.quote && p.quote.toLowerCase().includes(questionSearchQuery)) ||
+                  (p.stage && p.stage.toLowerCase().includes(questionSearchQuery)) ||
+                  (p.mind && p.mind.toLowerCase().includes(questionSearchQuery))
+                )
+              );
+            } else if (ans.patterns) {
+              matchAns = ans.patterns.some(p => 
+                (p.quote && p.quote.toLowerCase().includes(questionSearchQuery)) ||
+                (p.stage && p.stage.toLowerCase().includes(questionSearchQuery)) ||
+                (p.mind && p.mind.toLowerCase().includes(questionSearchQuery))
+              );
+            }
+          }
           if (!matchTitle && !matchGuide && !matchAns) return false;
         }
         return true;
@@ -3762,20 +4175,322 @@
         card.className = "q-card";
         card.id = `qcard_${q.id}`;
 
-        const ansData = c.answers && c.answers[q.id] ? c.answers[q.id] : {
-          patterns: [{ stage: "", quote: "", mind: "", note: "" }],
-          activeIdx: 0
-        };
-        const curPat = ansData.patterns[ansData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
+        if (!c.answers) c.answers = {};
+        if (!c.answers[q.id]) {
+          c.answers[q.id] = {
+            patterns: [{ stage: "", quote: "", mind: "", note: "" }],
+            activeIdx: 0
+          };
+        }
+        const ansData = c.answers[q.id];
 
-        let patTabsHtml = "";
-        ansData.patterns.forEach((p, pIdx) => {
-          patTabsHtml += `
-            <span class="pat-pill ${pIdx === ansData.activeIdx ? 'active' : ''}" onclick="switchPattern('${q.id}', ${pIdx})">
-              P${pIdx + 1}
-            </span>
-          `;
+        // 相手別モードの判定（明示フラグ、または質問定義のhasTargets）
+        const isTargetMode = ansData.isTargetMode !== undefined ? ansData.isTargetMode : (q.hasTargets === true);
+        const viewLayout = ansData.viewLayout || 'tab';
+        const customTargets = ansData.customTargets || JSON.parse(JSON.stringify(DEFAULT_ANSWER_TARGETS));
+        const activeTargetId = ansData.activeTargetId || (customTargets[0] ? customTargets[0].id : 'user');
+
+        // targetsデータの初期化保証
+        if (!ansData.targets) ansData.targets = {};
+        customTargets.forEach(t => {
+          if (!ansData.targets[t.id]) {
+            if (t.id === 'user' && ansData.patterns && ansData.patterns[0]) {
+              ansData.targets[t.id] = {
+                patterns: JSON.parse(JSON.stringify(ansData.patterns)),
+                activeIdx: ansData.activeIdx || 0
+              };
+            } else {
+              ansData.targets[t.id] = {
+                patterns: [{ stage: "", quote: "", mind: "", note: "" }],
+                activeIdx: 0
+              };
+            }
+          }
         });
+
+        // 質問ヘッダー操作
+        let headerCtrlsHtml = `
+          <button class="btn btn-secondary ${isTargetMode ? 'active' : ''}" style="padding:1px 6px; font-size:9px;" onclick="toggleTargetMode('${q.id}')" title="相手別（user／気になる人／普通の人）に回答を書き分ける">
+            👥 相手別${isTargetMode ? 'ON' : ''}
+          </button>
+        `;
+        if (isTargetMode) {
+          headerCtrlsHtml += `
+            <button class="btn btn-secondary" style="padding:1px 6px; font-size:9px;" onclick="toggleTargetViewLayout('${q.id}')" title="タブ切り替えと見比べ並べて表示を切り替え">
+              ${viewLayout === 'compare' ? '🗂️ タブ' : '📑 見比べ'}
+            </button>
+          `;
+        }
+        headerCtrlsHtml += `
+          <button class="btn btn-secondary" style="padding:1px 5px; font-size:9px;" onclick="openGeminiPrompt('${q.id}', '${escapeAttr(q.title)}', '${escapeAttr(q.guide || '')}')">
+            🤖 Gemini
+          </button>
+          <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:10px;" onclick="deleteQuestion('${q.id}')" title="削除">✕</button>
+        `;
+
+        let cardContentHtml = "";
+
+        if (isTargetMode) {
+          // --- 相手別モード ---
+          if (viewLayout === 'tab') {
+            // 【タブ表示レイアウト】
+            const curTargetInfo = customTargets.find(t => t.id === activeTargetId) || customTargets[0];
+            const targetData = ansData.targets[curTargetInfo.id] || { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+            const curPat = targetData.patterns[targetData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
+
+            // 相手タブバー
+            let targetTabsHtml = "";
+            customTargets.forEach(t => {
+              const isActive = t.id === curTargetInfo.id;
+              const isDefault = ['user', 'crush', 'normal'].includes(t.id);
+              targetTabsHtml += `
+                <div class="target-tab-pill ${isActive ? 'active' : ''}" onclick="switchTargetTab('${q.id}', '${t.id}')">
+                  <span>${escapeHtml(t.label)}</span>
+                  ${!isDefault ? `<span class="target-del-btn" onclick="event.stopPropagation(); deleteCustomTarget('${q.id}', '${t.id}')" title="この相手を削除">✕</span>` : ''}
+                </div>
+              `;
+            });
+            targetTabsHtml += `<button class="hand-btn" onclick="promptAddTarget('${q.id}')" title="新しい相手を追加">＋ 相手追加</button>`;
+
+            // パターンタブ
+            let patTabsHtml = "";
+            targetData.patterns.forEach((p, pIdx) => {
+              patTabsHtml += `
+                <span class="pat-pill ${pIdx === targetData.activeIdx ? 'active' : ''}" onclick="switchTargetPattern('${q.id}', '${curTargetInfo.id}', ${pIdx})">
+                  P${pIdx + 1}
+                </span>
+              `;
+            });
+
+            // 手元操作用の相手ピル
+            let handTargetPillsHtml = "";
+            customTargets.forEach(t => {
+              const isActive = t.id === curTargetInfo.id;
+              handTargetPillsHtml += `
+                <span class="hand-btn ${isActive ? 'active' : ''}" onclick="switchTargetTab('${q.id}', '${t.id}')">
+                  ${t.icon || '👤'} ${escapeHtml(t.label.split(' ')[0] || t.label)}
+                </span>
+              `;
+            });
+
+            cardContentHtml = `
+              <div class="target-mode-header">
+                <div class="target-tab-bar">${targetTabsHtml}</div>
+              </div>
+
+              <!-- 対話ボックス -->
+              <div class="dialogue-box">
+                <div class="stage-row">
+                  <span class="stage-tag">${escapeHtml(curTargetInfo.label.split(' ')[0] || '相手')}への仕草</span>
+                  <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
+                    value="${escapeAttr(curPat.stage || '')}"
+                    oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'stage', this.value)">
+                </div>
+
+                <div class="quote-block">
+                  <div class="avatar-wrapper">
+                    <div class="avatar-snap" title="現在の衣装立ち絵">
+                      <img src="${fallbackAvatar}">
+                    </div>
+                  </div>
+                  <div class="quote-box-wrap">
+                    <textarea class="quote-textarea" placeholder="「${escapeAttr(curTargetInfo.label)}に向けた返答セリフを入力...」"
+                      oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
+                  </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:2px;">
+                  <div style="display:flex; gap:3px; align-items:center;">
+                    ${patTabsHtml}
+                    <button class="btn btn-secondary" style="padding:1px 4px; font-size:9px;" onclick="addTargetPattern('${q.id}', '${curTargetInfo.id}')">＋</button>
+                    ${targetData.patterns.length > 1 ? `<button class="btn btn-secondary" style="padding:1px 4px; font-size:9px; color:#f87171;" onclick="deleteTargetPattern('${q.id}', '${curTargetInfo.id}')">✕</button>` : ''}
+                  </div>
+                  <span style="font-size:9px; color:var(--text-muted);">対象: <strong style="color:var(--genre-color);">${escapeHtml(curTargetInfo.label)}</strong></span>
+                </div>
+              </div>
+
+              <!-- アコーディオン -->
+              <div class="sub-item" id="acc_mind_${q.id}_${curTargetInfo.id}">
+                <div class="sub-head" onclick="toggleAcc('acc_mind_${q.id}_${curTargetInfo.id}')">
+                  <span>💭 ${escapeHtml(curTargetInfo.label)}への本音・心の声／急所反応</span>
+                  <span style="font-size:8px;">▼</span>
+                </div>
+                <div class="sub-body">
+                  <textarea class="sub-txt" placeholder="この相手に向けた心の内、赤面度合い、身体の敏感な反応..."
+                    oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'mind', this.value)">${escapeHtml(curPat.mind || '')}</textarea>
+                </div>
+              </div>
+
+              <div class="sub-item" id="acc_note_${q.id}_${curTargetInfo.id}">
+                <div class="sub-head" onclick="toggleAcc('acc_note_${q.id}_${curTargetInfo.id}')">
+                  <span>📝 作者メモ・考察</span>
+                  <span style="font-size:8px;">▼</span>
+                </div>
+                <div class="sub-body">
+                  <textarea class="sub-txt" placeholder="この相手との関係性メモ、裏設定..."
+                    oninput="updateTargetAnswer('${q.id}', '${curTargetInfo.id}', 'note', this.value)">${escapeHtml(curPat.note || '')}</textarea>
+                </div>
+              </div>
+
+              <!-- ⚡ 手元操作バー (上まで戻らずその場で操作可能) -->
+              <div class="hand-action-bar">
+                <div class="hand-left-group">
+                  <span class="hand-label">手元操作:</span>
+                  <button class="hand-btn" onclick="addTargetPattern('${q.id}', '${curTargetInfo.id}')">＋ P追加</button>
+                  ${patTabsHtml}
+                </div>
+                <div class="hand-right-group">
+                  <span class="hand-label">相手切替:</span>
+                  ${handTargetPillsHtml}
+                  <button class="hand-btn" onclick="promptAddTarget('${q.id}')">＋ 相手追加</button>
+                </div>
+              </div>
+            `;
+          } else {
+            // 【見比べ並べて表示レイアウト (compare)】
+            let compareBlocksHtml = "";
+            customTargets.forEach(t => {
+              const targetData = ansData.targets[t.id] || { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+              const curPat = targetData.patterns[targetData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
+              const isDefault = ['user', 'crush', 'normal'].includes(t.id);
+
+              let patTabs = "";
+              targetData.patterns.forEach((p, pIdx) => {
+                patTabs += `
+                  <span class="pat-pill ${pIdx === targetData.activeIdx ? 'active' : ''}" onclick="switchTargetPattern('${q.id}', '${t.id}', ${pIdx})">
+                    P${pIdx + 1}
+                  </span>
+                `;
+              });
+
+              compareBlocksHtml += `
+                <div class="compare-target-block ${t.id === activeTargetId ? 'active-focus' : ''}">
+                  <div class="compare-block-header">
+                    <span style="color:var(--text-main); font-size:11px;">${escapeHtml(t.label)}</span>
+                    <div style="display:flex; gap:3px; align-items:center;">
+                      ${patTabs}
+                      <button class="hand-btn" style="padding:1px 4px; font-size:8px;" onclick="addTargetPattern('${q.id}', '${t.id}')">＋</button>
+                      ${!isDefault ? `<button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:9px; margin-left:4px;" onclick="deleteCustomTarget('${q.id}', '${t.id}')">✕</button>` : ''}
+                    </div>
+                  </div>
+                  <div class="stage-row" style="margin-bottom:3px;">
+                    <span class="stage-tag">仕草</span>
+                    <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
+                      value="${escapeAttr(curPat.stage || '')}"
+                      oninput="updateTargetAnswer('${q.id}', '${t.id}', 'stage', this.value)">
+                  </div>
+                  <div class="quote-block">
+                    <div class="avatar-wrapper">
+                      <div class="avatar-snap"><img src="${fallbackAvatar}"></div>
+                    </div>
+                    <div class="quote-box-wrap">
+                      <textarea class="quote-textarea" style="height:44px;" placeholder="「${escapeAttr(t.label)}への返答セリフ...」"
+                        oninput="updateTargetAnswer('${q.id}', '${t.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
+                    </div>
+                  </div>
+                  <div style="margin-top:4px;">
+                    <input type="text" class="stage-input" style="font-size:10px; color:#f43f5e;" placeholder="💭 心の声・本音・反応..."
+                      value="${escapeAttr(curPat.mind || '')}"
+                      oninput="updateTargetAnswer('${q.id}', '${t.id}', 'mind', this.value)">
+                  </div>
+                </div>
+              `;
+            });
+
+            cardContentHtml = `
+              <div class="compare-targets-container">
+                ${compareBlocksHtml}
+              </div>
+              <div class="hand-action-bar" style="margin-top:8px;">
+                <div class="hand-left-group">
+                  <button class="hand-btn" onclick="toggleTargetViewLayout('${q.id}')">🗂️ タブ表示に切り替え</button>
+                </div>
+                <div class="hand-right-group">
+                  <button class="hand-btn" onclick="promptAddTarget('${q.id}')">＋ 新しい相手を追加</button>
+                </div>
+              </div>
+            `;
+          }
+        } else {
+          // --- 通常質問モード (相手別オフ) ---
+          const curPat = ansData.patterns[ansData.activeIdx] || { stage: "", quote: "", mind: "", note: "" };
+
+          let patTabsHtml = "";
+          ansData.patterns.forEach((p, pIdx) => {
+            patTabsHtml += `
+              <span class="pat-pill ${pIdx === ansData.activeIdx ? 'active' : ''}" onclick="switchPattern('${q.id}', ${pIdx})">
+                P${pIdx + 1}
+              </span>
+            `;
+          });
+
+          cardContentHtml = `
+            <!-- 対話ボックス -->
+            <div class="dialogue-box">
+              <div class="stage-row">
+                <span class="stage-tag">仕草</span>
+                <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
+                  value="${escapeAttr(curPat.stage || '')}"
+                  oninput="updateAnswer('${q.id}', 'stage', this.value)">
+              </div>
+
+              <div class="quote-block">
+                <div class="avatar-wrapper">
+                  <div class="avatar-snap" title="現在の衣装立ち絵">
+                    <img src="${fallbackAvatar}">
+                  </div>
+                </div>
+                <div class="quote-box-wrap">
+                  <textarea class="quote-textarea" placeholder="「キャラクターの返答セリフを入力...」"
+                    oninput="updateAnswer('${q.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1px;">
+                <div style="display:flex; gap:3px;">
+                  ${patTabsHtml}
+                  <button class="btn btn-secondary" style="padding:1px 4px; font-size:9px;" onclick="addPattern('${q.id}')">＋</button>
+                  ${ansData.patterns.length > 1 ? `<button class="btn btn-secondary" style="padding:1px 4px; font-size:9px; color:#f87171;" onclick="deletePattern('${q.id}')">✕</button>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- アコーディオン -->
+            <div class="sub-item" id="acc_mind_${q.id}">
+              <div class="sub-head" onclick="toggleAcc('acc_mind_${q.id}')">
+                <span>💭 本音・心の声／急所反応</span>
+                <span style="font-size:8px;">▼</span>
+              </div>
+              <div class="sub-body">
+                <textarea class="sub-txt" placeholder="表向きの返答とは違う心の内、赤面度合い、身体の敏感な反応..."
+                  oninput="updateAnswer('${q.id}', 'mind', this.value)">${escapeHtml(curPat.mind || '')}</textarea>
+              </div>
+            </div>
+
+            <div class="sub-item" id="acc_note_${q.id}">
+              <div class="sub-head" onclick="toggleAcc('acc_note_${q.id}')">
+                <span>📝 作者メモ・考察</span>
+                <span style="font-size:8px;">▼</span>
+              </div>
+              <div class="sub-body">
+                <textarea class="sub-txt" placeholder="設定アイデア、裏設定考察..."
+                  oninput="updateAnswer('${q.id}', 'note', this.value)">${escapeHtml(curPat.note || '')}</textarea>
+              </div>
+            </div>
+
+            <!-- ⚡ 手元操作バー (通常質問でも手元で操作可能) -->
+            <div class="hand-action-bar">
+              <div class="hand-left-group">
+                <span class="hand-label">手元操作:</span>
+                <button class="hand-btn" onclick="addPattern('${q.id}')">＋ P追加</button>
+                ${patTabsHtml}
+              </div>
+              <div class="hand-right-group">
+                <button class="hand-btn" onclick="toggleTargetMode('${q.id}')">👥 相手別に書き分ける</button>
+              </div>
+            </div>
+          `;
+        }
 
         card.innerHTML = `
           <div class="q-head-row">
@@ -3784,69 +4499,11 @@
               <div class="q-title-txt">${escapeHtml(q.title)}</div>
               <div class="q-guide-txt">${escapeHtml(q.guide || '')}</div>
             </div>
-            <div class="q-ctrls" style="display:flex; align-items:center; gap:5px;">
-              <button class="btn btn-secondary" style="padding:1px 5px; font-size:9px;" onclick="openGeminiPrompt('${q.id}', '${escapeAttr(q.title)}', '${escapeAttr(q.guide || '')}')">
-                🤖 Gemini
-              </button>
-              <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:10px;" onclick="deleteQuestion('${q.id}')" title="削除">✕</button>
+            <div class="q-ctrls" style="display:flex; align-items:center; gap:4px;">
+              ${headerCtrlsHtml}
             </div>
           </div>
-
-          <!-- 対話ボックス -->
-          <div class="dialogue-box">
-            <!-- ト書き -->
-            <div class="stage-row">
-              <span class="stage-tag">仕草</span>
-              <input type="text" class="stage-input" placeholder="例: （少し目を伏せ、耳を赤く染めながら視線を逸らす）"
-                value="${escapeAttr(curPat.stage || '')}"
-                oninput="updateAnswer('${q.id}', 'stage', this.value)">
-            </div>
-
-            <!-- セリフ＆衣装立ち絵アバター（シンプルで視認性抜群） -->
-            <div class="quote-block">
-              <div class="avatar-wrapper">
-                <div class="avatar-snap" title="現在の衣装立ち絵">
-                  <img src="${fallbackAvatar}">
-                </div>
-              </div>
-              <div class="quote-box-wrap">
-                <textarea class="quote-textarea" placeholder="「キャラクターの返答セリフを入力...」"
-                  oninput="updateAnswer('${q.id}', 'quote', this.value)">${escapeHtml(curPat.quote || '')}</textarea>
-              </div>
-            </div>
-
-            <!-- パターン操作 -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1px;">
-              <div style="display:flex; gap:3px;">
-                ${patTabsHtml}
-                <button class="btn btn-secondary" style="padding:1px 4px; font-size:9px;" onclick="addPattern('${q.id}')">＋</button>
-                ${ansData.patterns.length > 1 ? `<button class="btn btn-secondary" style="padding:1px 4px; font-size:9px; color:#f87171;" onclick="deletePattern('${q.id}')">✕</button>` : ''}
-              </div>
-            </div>
-          </div>
-
-          <!-- アコーディオン -->
-          <div class="sub-item" id="acc_mind_${q.id}">
-            <div class="sub-head" onclick="toggleAcc('acc_mind_${q.id}')">
-              <span>💭 本音・心の声／急所反応</span>
-              <span style="font-size:8px;">▼</span>
-            </div>
-            <div class="sub-body">
-              <textarea class="sub-txt" placeholder="表向きの返答とは違う心の内、赤面度合い、身体の敏感な反応..."
-                oninput="updateAnswer('${q.id}', 'mind', this.value)">${escapeHtml(curPat.mind || '')}</textarea>
-            </div>
-          </div>
-
-          <div class="sub-item" id="acc_note_${q.id}">
-            <div class="sub-head" onclick="toggleAcc('acc_note_${q.id}')">
-              <span>📝 作者メモ・考察</span>
-              <span style="font-size:8px;">▼</span>
-            </div>
-            <div class="sub-body">
-              <textarea class="sub-txt" placeholder="設定アイデア、裏設定考察..."
-                oninput="updateAnswer('${q.id}', 'note', this.value)">${escapeHtml(curPat.note || '')}</textarea>
-            </div>
-          </div>
+          ${cardContentHtml}
         `;
 
         container.appendChild(card);
@@ -4009,6 +4666,438 @@
         showToast("パターンを削除しました");
       }
     }
+
+    /* 相手別回答操作関数群 */
+    function updateTargetAnswer(qId, targetId, field, val) {
+      const c = getActiveChar();
+      if (!c.answers) c.answers = {};
+      if (!c.answers[qId]) c.answers[qId] = { isTargetMode: true, targets: {} };
+      const ansData = c.answers[qId];
+      ansData.isTargetMode = true;
+      if (!ansData.targets) ansData.targets = {};
+      if (!ansData.targets[targetId]) {
+        ansData.targets[targetId] = { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+      }
+      const tData = ansData.targets[targetId];
+      if (!tData.patterns[tData.activeIdx]) {
+        tData.patterns[tData.activeIdx] = { stage: "", quote: "", mind: "", note: "" };
+      }
+      tData.patterns[tData.activeIdx][field] = val;
+      saveData();
+      renderCharShelf();
+    }
+
+    function switchTargetTab(qId, targetId) {
+      const c = getActiveChar();
+      if (c.answers && c.answers[qId]) {
+        c.answers[qId].activeTargetId = targetId;
+        saveData();
+        renderActiveGenreQuestions();
+      }
+    }
+
+    function switchTargetPattern(qId, targetId, idx) {
+      const c = getActiveChar();
+      if (c.answers && c.answers[qId] && c.answers[qId].targets && c.answers[qId].targets[targetId]) {
+        c.answers[qId].targets[targetId].activeIdx = idx;
+        saveData();
+        renderActiveGenreQuestions();
+      }
+    }
+
+    function addTargetPattern(qId, targetId) {
+      const c = getActiveChar();
+      if (!c.answers) c.answers = {};
+      if (!c.answers[qId]) c.answers[qId] = { isTargetMode: true, targets: {} };
+      const ansData = c.answers[qId];
+      if (!ansData.targets) ansData.targets = {};
+      if (!ansData.targets[targetId]) {
+        ansData.targets[targetId] = { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+      }
+      ansData.targets[targetId].patterns.push({ stage: "", quote: "", mind: "", note: "" });
+      ansData.targets[targetId].activeIdx = ansData.targets[targetId].patterns.length - 1;
+      saveData();
+      renderActiveGenreQuestions();
+      showToast("パターンを追加しました");
+    }
+
+    function deleteTargetPattern(qId, targetId) {
+      const c = getActiveChar();
+      if (c.answers && c.answers[qId] && c.answers[qId].targets && c.answers[qId].targets[targetId]) {
+        const tData = c.answers[qId].targets[targetId];
+        if (tData.patterns.length > 1) {
+          tData.patterns.splice(tData.activeIdx, 1);
+          tData.activeIdx = Math.max(0, tData.activeIdx - 1);
+          saveData();
+          renderActiveGenreQuestions();
+          showToast("パターンを削除しました");
+        }
+      }
+    }
+
+    function toggleTargetMode(qId) {
+      const c = getActiveChar();
+      if (!c.answers) c.answers = {};
+      if (!c.answers[qId]) {
+        c.answers[qId] = { patterns: [{ stage: "", quote: "", mind: "", note: "" }], activeIdx: 0 };
+      }
+      const ansData = c.answers[qId];
+      const curMode = ansData.isTargetMode !== undefined ? ansData.isTargetMode : false;
+      ansData.isTargetMode = !curMode;
+      saveData();
+      renderActiveGenreQuestions();
+      showToast(ansData.isTargetMode ? "相手別モードを有効にしました" : "通常モードに戻しました");
+    }
+
+    function toggleTargetViewLayout(qId) {
+      const c = getActiveChar();
+      if (!c.answers || !c.answers[qId]) return;
+      const ansData = c.answers[qId];
+      ansData.viewLayout = ansData.viewLayout === 'compare' ? 'tab' : 'compare';
+      saveData();
+      renderActiveGenreQuestions();
+      showToast(ansData.viewLayout === 'compare' ? "見比べ一覧表示に切り替えました" : "タブ表示に切り替えました");
+    }
+
+    function promptAddTarget(qId) {
+      const label = prompt("追加したい相手の名前・関係性（例: 師匠、ライバル、妹）:");
+      if (!label || !label.trim()) return;
+      const c = getActiveChar();
+      if (!c.answers) c.answers = {};
+      if (!c.answers[qId]) c.answers[qId] = { isTargetMode: true, targets: {} };
+      const ansData = c.answers[qId];
+      if (!ansData.customTargets) {
+        ansData.customTargets = JSON.parse(JSON.stringify(DEFAULT_ANSWER_TARGETS));
+      }
+      const newTargetId = `target_${Date.now()}`;
+      ansData.customTargets.push({
+        id: newTargetId,
+        label: label.trim(),
+        icon: "👤",
+        color: "#a855f7"
+      });
+      if (!ansData.targets) ansData.targets = {};
+      ansData.targets[newTargetId] = {
+        patterns: [{ stage: "", quote: "", mind: "", note: "" }],
+        activeIdx: 0
+      };
+      ansData.activeTargetId = newTargetId;
+      ansData.isTargetMode = true;
+      saveData();
+      renderActiveGenreQuestions();
+      showToast(`相手「${label.trim()}」を追加しました！`);
+    }
+
+    function deleteCustomTarget(qId, targetId) {
+      if (['user', 'crush', 'normal'].includes(targetId)) {
+        showToast("基本相手（user/気になる人/普通の人）は削除できません");
+        return;
+      }
+      if (!confirm("この相手の回答を削除しますか？")) return;
+      const c = getActiveChar();
+      if (c.answers && c.answers[qId]) {
+        const ansData = c.answers[qId];
+        if (ansData.customTargets) {
+          ansData.customTargets = ansData.customTargets.filter(t => t.id !== targetId);
+        }
+        if (ansData.targets && ansData.targets[targetId]) {
+          delete ansData.targets[targetId];
+        }
+        ansData.activeTargetId = 'user';
+        saveData();
+        renderActiveGenreQuestions();
+        showToast("相手を削除しました");
+      }
+    }
+
+    /* ==========================================================
+       🖼️ キャラクター専用図鑑・ビューワーモード (単なるキャラビュワー機能)
+       ========================================================== */
+    let activeViewerTab = 'overview'; // 'overview', 'voices', 'interview'
+    let viewerOutfit = null;
+
+    async function openCharViewer() {
+      const c = getActiveChar();
+      viewerOutfit = c.currentOutfit || 'casual';
+      activeViewerTab = 'overview';
+      document.getElementById("charViewerModal").style.display = "flex";
+      await renderCharViewer();
+    }
+
+    function closeCharViewer() {
+      document.getElementById("charViewerModal").style.display = "none";
+    }
+
+    function switchViewerTab(tab) {
+      activeViewerTab = tab;
+      ['overview', 'voices', 'interview'].forEach(t => {
+        const btn = document.getElementById(`v_tab_${t}`);
+        if (btn) btn.classList.toggle('active', t === tab);
+      });
+      renderCharViewerContent();
+    }
+
+    async function switchViewerOutfit(outfitKey) {
+      viewerOutfit = outfitKey;
+      const c = getActiveChar();
+      const pImg = document.getElementById("v_portraitImg");
+      const src = await getImageFromDB(`img_${c.id}_${outfitKey}`);
+      if (src) {
+        pImg.src = src;
+        pImg.style.display = "block";
+      } else {
+        pImg.src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%232a3142%22/></svg>';
+      }
+      // ピル更新
+      document.querySelectorAll(".viewer-outfit-pill").forEach(p => {
+        p.classList.toggle("active", p.dataset.outfit === outfitKey);
+      });
+    }
+
+    async function openLightboxFromViewer() {
+      const pImg = document.getElementById("v_portraitImg");
+      if (pImg && pImg.src && !pImg.src.startsWith('data:image/svg')) {
+        openLightbox(pImg.src);
+      }
+    }
+
+    async function renderCharViewer() {
+      const c = getActiveChar();
+      const s = c.sheet || {};
+      const pType = detectPersonalityType(c);
+
+      document.getElementById("v_charName").textContent = c.name || "未設定";
+      document.getElementById("v_charAlias").textContent = c.alias ? `〜${c.alias}〜` : "";
+      document.getElementById("v_charType").textContent = pType.title;
+      document.getElementById("v_charCv").textContent = c.cv || "未設定";
+
+      // 立ち絵
+      await switchViewerOutfit(viewerOutfit || c.currentOutfit || 'casual');
+
+      // 衣装ピル
+      const pillsContainer = document.getElementById("v_outfitPills");
+      pillsContainer.innerHTML = "";
+      (c.outfits || DEFAULT_OUTFITS).forEach(o => {
+        const pill = document.createElement("button");
+        pill.className = `viewer-outfit-pill ${o.id === viewerOutfit ? 'active' : ''}`;
+        pill.dataset.outfit = o.id;
+        pill.textContent = o.name;
+        pill.onclick = (e) => {
+          e.stopPropagation();
+          switchViewerOutfit(o.id);
+        };
+        pillsContainer.appendChild(pill);
+      });
+
+      renderCharViewerContent();
+    }
+
+    function renderCharViewerContent() {
+      const c = getActiveChar();
+      const s = c.sheet || {};
+      const r = c.radar || {};
+      const pType = detectPersonalityType(c);
+      const container = document.getElementById("v_contentSide");
+      container.innerHTML = "";
+
+      if (activeViewerTab === 'overview') {
+        // --- 総合カルテ ＆ トリセツ ---
+        let html = `
+          <!-- カルテ -->
+          <div class="viewer-card">
+            <div class="viewer-card-title">📖 パーソナル＆外見カルテ</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; font-size:11px;">
+              <div><strong style="color:var(--text-sub);">年齢/種族:</strong> ${c.age || '未設定'} / ${c.race || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">職業/立場:</strong> ${c.job || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">誕生日/血液型:</strong> ${s.birth || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">家族構成・血縁:</strong> ${s.family || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">現住まい・拠点:</strong> ${s.residence || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">身長/体格:</strong> ${s.body_size || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">スリーサイズ:</strong> ${s.three_size || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">髪/瞳の色:</strong> ${s.hair_eye || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">傷痕/特徴:</strong> ${s.scars || s.feature || 'なし'}</div>
+              <div><strong style="color:var(--text-sub);">匂い・香気:</strong> ${s.smell || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">一人称/二人称:</strong> ${s.prono || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">口調:</strong> ${s.tone || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">好物/苦手:</strong> ${s.likes || '未設定'} / ${s.dislikes || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">趣味/嗜好品:</strong> ${s.hobby || '未設定'} / ${s.luxury || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">戦闘スタイル:</strong> ${s.battle || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">寝室傾向:</strong> ${c.position}</div>
+              <div><strong style="color:var(--text-sub);">好みのタイプ:</strong> ${s.love_type || '未設定'}</div>
+              <div><strong style="color:var(--text-sub);">敏感な急所:</strong> ${c.body || '未設定'}</div>
+            </div>
+            ${c.traits && c.traits.length > 0 ? `
+              <div style="margin-top:12px; padding-top:10px; border-top:1px dashed rgba(255,255,255,0.08); font-size:11px;">
+                <strong style="color:var(--genre-color);">【自由追加設定】:</strong>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+                  ${c.traits.map(t => `<span style="background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px; border:1px solid rgba(255,255,255,0.06);"><strong>${escapeHtml(t.key)}:</strong> ${escapeHtml(t.val)}</span>`).join('')}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- 12軸ステータス -->
+          <div class="viewer-card">
+            <div class="viewer-card-title">📊 表裏12軸パラメータ</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+              <div>
+                <div style="font-size:11px; font-weight:700; color:#38bdf8; margin-bottom:6px;">【表】日常・冒険 6軸</div>
+                ${renderViewerStatBar('戦闘力・身体能力', r.battle || 50, '#38bdf8')}
+                ${renderViewerStatBar('知性・観察眼', r.intellect || 50, '#38bdf8')}
+                ${renderViewerStatBar('精神力・耐久性', r.mental || 50, '#38bdf8')}
+                ${renderViewerStatBar('社交性・愛嬌', r.social || 50, '#38bdf8')}
+                ${renderViewerStatBar('生活力・家事能力', r.lifestyle || 50, '#38bdf8')}
+                ${renderViewerStatBar('器用さ・技術力', r.technique || 50, '#38bdf8')}
+              </div>
+              <div>
+                <div style="font-size:11px; font-weight:700; color:#f43f5e; margin-bottom:6px;">【裏】恋愛・夜 6軸</div>
+                ${renderViewerStatBar('素直さ・デレ度', r.honesty || 50, '#f43f5e')}
+                ${renderViewerStatBar('独占欲・執着心', r.jealousy || 50, '#f43f5e')}
+                ${renderViewerStatBar('羞恥心・潔癖度', r.shame || 50, '#f43f5e')}
+                ${renderViewerStatBar('快楽感度・屈服度', r.pleasure || 50, '#f43f5e')}
+                ${renderViewerStatBar('奉仕欲・従属性', r.devotion || 50, '#f43f5e')}
+                ${renderViewerStatBar('支配・被虐性', r.dominance || 50, '#f43f5e')}
+              </div>
+            </div>
+          </div>
+
+          <!-- 取扱説明書 -->
+          <div class="viewer-card">
+            <div class="viewer-card-title">📖 シチュエーション別 取扱説明書</div>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              ${GUIDE_PRESETS.map(gp => {
+                const text = (c.guides && c.guides[gp.id]) ? c.guides[gp.id] : generateDefaultGuideText(c, gp.id);
+                return `
+                  <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:10px;">
+                    <div style="font-size:12px; font-weight:700; color:var(--text-main); margin-bottom:4px;">${gp.icon} 【${gp.title}】</div>
+                    <div style="font-size:11px; line-height:1.6; color:var(--text-sub);">${escapeHtml(text)}</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+        container.innerHTML = html;
+      } else if (activeViewerTab === 'voices') {
+        // --- ボイス集 ---
+        let html = `<div class="viewer-card"><div class="viewer-card-title">💬 シチュエーション別 決め台詞集</div>`;
+        VOICE_PRESETS.forEach(v => {
+          const vl = c.voiceLines ? c.voiceLines[v.id] : null;
+          const quote = vl && vl.quote ? vl.quote : v.defaultQuote;
+          const stage = vl && vl.stage ? vl.stage : v.defaultStage;
+          const note = vl && vl.note ? vl.note : "";
+
+          html += `
+            <div class="viewer-speech-bubble">
+              <div style="font-size:10px; font-weight:700; color:var(--genre-color); margin-bottom:3px;">${v.label}</div>
+              ${stage ? `<div class="viewer-speech-stage">（${escapeHtml(stage)}）</div>` : ''}
+              <div class="viewer-speech-quote">「${escapeHtml(quote)}」</div>
+              ${note ? `<div style="font-size:10px; color:var(--text-muted); margin-top:4px;">※ ${escapeHtml(note)}</div>` : ''}
+            </div>
+          `;
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+      } else if (activeViewerTab === 'interview') {
+        // --- 対話・インタビュー録 ---
+        let html = `<div class="viewer-card"><div class="viewer-card-title">🎙️ 対話・インタビュー録</div>`;
+        let totalAnswered = 0;
+
+        (appData.chapters || []).forEach(ch => {
+          let chHtml = "";
+          (ch.questions || []).forEach((q, idx) => {
+            const ans = c.answers ? c.answers[q.id] : null;
+            if (!ans) return;
+
+            if (ans.isTargetMode && ans.targets) {
+              const customTargets = ans.customTargets || DEFAULT_ANSWER_TARGETS;
+              let targetAnswersHtml = "";
+              let hasAny = false;
+
+              customTargets.forEach(t => {
+                const tData = ans.targets[t.id];
+                if (tData && tData.patterns) {
+                  const p = (tData.patterns || []).find(pat => (pat.quote && pat.quote.trim()) || (pat.stage && pat.stage.trim())) || tData.patterns[tData.activeIdx || 0];
+                  if (p && ((p.quote && p.quote.trim()) || (p.stage && p.stage.trim()))) {
+                    hasAny = true;
+                    targetAnswersHtml += `
+                      <div style="margin-top:6px; padding:6px 10px; background:rgba(255,255,255,0.03); border-radius:6px; border-left:3px solid ${t.color || 'var(--genre-color)'};">
+                        <div style="font-size:10px; font-weight:700; color:${t.color || 'var(--genre-color)'};">${escapeHtml(t.label)}</div>
+                        ${p.stage ? `<div class="viewer-speech-stage">（${escapeHtml(p.stage)}）</div>` : ''}
+                        ${p.quote ? `<div class="viewer-speech-quote">「${escapeHtml(p.quote)}」</div>` : ''}
+                        ${p.mind ? `<div class="viewer-speech-mind"><span>💭</span><span>${escapeHtml(p.mind)}</span></div>` : ''}
+                      </div>
+                    `;
+                  }
+                }
+              });
+
+              if (hasAny) {
+                totalAnswered++;
+                chHtml += `
+                  <div class="viewer-speech-bubble">
+                    <div style="font-size:12px; font-weight:700; color:var(--text-main);">Q.${idx + 1} ${escapeHtml(q.title)}</div>
+                    ${targetAnswersHtml}
+                  </div>
+                `;
+              }
+            } else if (ans.patterns) {
+              const p = ans.patterns[ans.activeIdx || 0];
+              if (p && ((p.quote && p.quote.trim()) || (p.stage && p.stage.trim()))) {
+                totalAnswered++;
+                chHtml += `
+                  <div class="viewer-speech-bubble">
+                    <div style="font-size:12px; font-weight:700; color:var(--text-main);">Q.${idx + 1} ${escapeHtml(q.title)}</div>
+                    ${p.stage ? `<div class="viewer-speech-stage">（${escapeHtml(p.stage)}）</div>` : ''}
+                    ${p.quote ? `<div class="viewer-speech-quote">「${escapeHtml(p.quote)}」</div>` : ''}
+                    ${p.mind ? `<div class="viewer-speech-mind"><span>💭</span><span>${escapeHtml(p.mind)}</span></div>` : ''}
+                  </div>
+                `;
+              }
+            }
+          });
+
+          if (chHtml) {
+            html += `
+              <div style="margin-top:12px; margin-bottom:8px; font-size:13px; font-weight:800; color:var(--genre-color);">
+                ${ch.title}
+              </div>
+              ${chHtml}
+            `;
+          }
+        });
+
+        if (totalAnswered === 0) {
+          html += `<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:12px;">まだインタビュー回答がありません。スタジオ画面で質問に回答すると、ここに美麗な対話録が生成されます。</div>`;
+        }
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+    }
+
+    function renderViewerStatBar(label, val, barColor) {
+      return `
+        <div style="margin-bottom:6px;">
+          <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:2px;">
+            <span style="color:var(--text-sub);">${label}</span>
+            <span style="font-weight:700; color:var(--text-main);">${val}</span>
+          </div>
+          <div style="height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
+            <div style="height:100%; width:${val}%; background:${barColor}; border-radius:3px;"></div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Escキーで図鑑ビューワーを閉じる
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const vModal = document.getElementById("charViewerModal");
+        if (vModal && vModal.style.display === "flex") {
+          closeCharViewer();
+        }
+      }
+    });
 
     function toggleAcc(id) {
       const item = document.getElementById(id);
@@ -4178,7 +5267,8 @@
 名前: ${c.name} (${c.alias || '称号なし'})
 性別: ${c.gender === 'female' ? '女性' : c.gender === 'male' ? '男性' : '中性'}
 年齢: ${c.age || '未設定'} / 種族: ${c.race || '未設定'} / 職業: ${c.job || '未設定'}
-誕生日・血液型: ${s.birth || '未設定'} / 家族・住まい: ${s.family || '未設定'}
+誕生日・血液型: ${s.birth || '未設定'}
+家族構成・血縁: ${s.family || '未設定'} / 現住まい・生活拠点: ${s.residence || '未設定'}
 外見・体格: ${s.body_size || '未設定'} / スリーサイズ: ${s.three_size || '未設定'}
 髪・瞳: ${s.hair_eye || '未設定'} / 身体的特徴・傷痕: ${s.scars || s.feature || '未設定'}
 匂い・香り: ${s.smell || '未設定'}
@@ -4363,15 +5453,33 @@ Q: ${title}
       let samples = [];
       if (c.answers) {
         for (const [qId, ans] of Object.entries(c.answers)) {
-          if (ans.patterns && ans.patterns.length > 0) {
-            const p = ans.patterns[ans.activeIdx || 0];
-            if (p.quote && p.quote.trim()) {
-              // 質問タイトルを取得
-              let qTitle = qId;
-              for (const ch of (appData.chapters || [])) {
-                const found = (ch.questions || []).find(q => q.id === qId);
-                if (found) { qTitle = found.title; break; }
+          // 質問タイトルを取得
+          let qTitle = qId;
+          for (const ch of (appData.chapters || [])) {
+            const found = (ch.questions || []).find(q => q.id === qId);
+            if (found) { qTitle = found.title; break; }
+          }
+
+          const isTarget = ans.isTargetMode || (ans.targets && Object.keys(ans.targets).length > 0);
+          if (isTarget && ans.targets) {
+            const customTargets = ans.customTargets || DEFAULT_ANSWER_TARGETS;
+            customTargets.forEach(t => {
+              const tData = ans.targets[t.id];
+              if (tData && tData.patterns) {
+                const p = (tData.patterns || []).find(pat => (pat.quote && pat.quote.trim()) || (pat.stage && pat.stage.trim())) || tData.patterns[tData.activeIdx || 0];
+                if (p && p.quote && p.quote.trim()) {
+                  samples.push({
+                    q: `${qTitle} 【対 ${t.label}】`,
+                    stage: p.stage || "",
+                    quote: p.quote,
+                    mind: p.mind || ""
+                  });
+                }
               }
+            });
+          } else if (ans.patterns && ans.patterns.length > 0) {
+            const p = ans.patterns[ans.activeIdx || 0];
+            if (p && p.quote && p.quote.trim()) {
               samples.push({
                 q: qTitle,
                 stage: p.stage || "",
@@ -4397,7 +5505,7 @@ Q: ${title}
       // サンプル対話テキスト
       let sampleDialogues = "";
       if (samples.length > 0) {
-        sampleDialogues = samples.slice(0, 5).map(sm => {
+        sampleDialogues = samples.slice(0, 15).map(sm => {
           return `【問: ${sm.q}】\n${sm.stage ? `(${sm.stage})\n` : ""}「${sm.quote}」${sm.mind ? `\n（内心・本音: ${sm.mind}）` : ""}`;
         }).join("\n\n");
       } else {
@@ -4423,6 +5531,7 @@ AIとしてのメタな発言や解説は一切排除し、相手の発言や行
 - 性別・外見: ${c.gender === 'female' ? '女性' : c.gender === 'male' ? '男性' : '中性'} / 年齢: ${c.age || '未設定'}
 - 種族・身元: ${c.race || '未設定'} / 職業・立場: ${c.job || '未設定'}
 - 誕生日・血液型: ${s.birth || '未設定'}
+- 家族構成・血縁: ${s.family || '未設定'} / 現住まい・生活拠点: ${s.residence || '未設定'}
 - 身長・体重・体格: ${s.body_size || '未設定'} / スリーサイズ等: ${s.three_size || '未設定'}
 - 容姿・髪・瞳: ${s.hair_eye || '未設定'}
 - 身体的特徴・傷跡: ${s.feature || ''} ${s.scars || ''}
@@ -4754,8 +5863,9 @@ ${sampleDialogues}
       md += `- **年齢 / 外見年齢**: ${c.age || '未設定'}\n`;
       md += `- **種族**: ${c.race || '未設定'}\n`;
       md += `- **職業 / 肩書**: ${c.job || '未設定'}\n`;
-      md += `- **誕生日 / 星座 / 血液型**: ${s.birth || '未設定'}\n`;
-      md += `- **家族・出身・現住まい**: ${s.family || '未設定'}\n\n`;
+      md += `- **誕生日 / 星座 / 血液型**: ${s.birth || '未設定'}\n`
+      md += `- **家族構成・血縁・両親兄弟**: ${s.family || '未設定'}\n`;
+      md += `- **現住まい・生活拠点・居場所**: ${s.residence || '未設定'}\n\n`;
 
       md += `## 2. 外見・身体的特徴\n`;
       md += `- **身長・体重・体格**: ${s.body_size || '未設定'}\n`;
@@ -4829,9 +5939,20 @@ ${sampleDialogues}
         (ch.questions || []).forEach((q, idx) => {
           if (c.answers && c.answers[q.id]) {
             const ans = c.answers[q.id];
-            const p = (ans.patterns || [])[ans.activeIdx || 0];
-            if (p && (p.quote || p.stage)) {
-              chAnswers.push({ q, p, num: idx + 1 });
+            const isTarget = ans.isTargetMode || (ans.targets && Object.keys(ans.targets).length > 0);
+            if (isTarget && ans.targets) {
+              const customTargets = ans.customTargets || DEFAULT_ANSWER_TARGETS;
+              const hasAny = Object.values(ans.targets).some(tData => 
+                (tData.patterns || []).some(p => (p.quote && p.quote.trim()) || (p.stage && p.stage.trim()))
+              );
+              if (hasAny) {
+                chAnswers.push({ q, ans, isTargetMode: true, customTargets, num: idx + 1 });
+              }
+            } else {
+              const p = (ans.patterns || [])[ans.activeIdx || 0];
+              if (p && ((p.quote && p.quote.trim()) || (p.stage && p.stage.trim()))) {
+                chAnswers.push({ q, p, isTargetMode: false, num: idx + 1 });
+              }
             }
           }
         });
@@ -4840,10 +5961,26 @@ ${sampleDialogues}
           md += `### ${ch.title}\n\n`;
           chAnswers.forEach(item => {
             md += `#### Q.${item.num} ${item.q.title}\n`;
-            if (item.p.stage) md += `*(${item.p.stage})*\n`;
-            if (item.p.quote) md += `「${item.p.quote}」\n`;
-            if (item.p.mind) md += `> 💭 本音: ${item.p.mind}\n`;
-            if (item.p.note) md += `> 📝 メモ: ${item.p.note}\n`;
+            if (item.isTargetMode) {
+              item.customTargets.forEach(t => {
+                const tData = item.ans.targets[t.id];
+                if (tData && tData.patterns) {
+                  const p = (tData.patterns || []).find(pat => (pat.quote && pat.quote.trim()) || (pat.stage && pat.stage.trim())) || tData.patterns[tData.activeIdx || 0];
+                  if (p && ((p.quote && p.quote.trim()) || (p.stage && p.stage.trim()))) {
+                    md += `- **【${t.label}】**: `;
+                    if (p.stage) md += `*(${p.stage})* `;
+                    if (p.quote) md += `「${p.quote}」`;
+                    if (p.mind) md += ` _(本音: ${p.mind})_`;
+                    md += `\n`;
+                  }
+                }
+              });
+            } else {
+              if (item.p.stage) md += `*(${item.p.stage})*\n`;
+              if (item.p.quote) md += `「${item.p.quote}」\n`;
+              if (item.p.mind) md += `> 💭 本音: ${item.p.mind}\n`;
+              if (item.p.note) md += `> 📝 メモ: ${item.p.note}\n`;
+            }
             md += `\n`;
           });
         }
